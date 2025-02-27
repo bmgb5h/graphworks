@@ -2,6 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 from app.routes import api_bp
 
+
 def create_app(test_config=None):
     app = Flask(__name__)
 

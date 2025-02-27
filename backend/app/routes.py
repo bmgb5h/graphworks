@@ -1,12 +1,13 @@
+from uuid import uuid4
 import networkx as nx
 import pandas as pd
-from uuid import uuid4
 from flask import Blueprint, jsonify, request, current_app
+
 
 api_bp = Blueprint('api', __name__)
 
+
 # route to receive and parse the uploaded CSV file
-# TODO: add an option for a undirected graph
 @api_bp.route('/api/upload', methods=['POST'])
 def upload():
     if 'file' not in request.files:
@@ -17,6 +18,9 @@ def upload():
     if file.filename == '':
         return jsonify({'error': 'No selected file'}), 400
 
+    # get the graph type from the form data
+    graph_type = request.form.get('graph_type', 'directed')
+
     if file and file.filename.endswith('.csv'):
         # generate a unique ID for the graph
         graph_id = str(uuid4())
@@ -24,7 +28,10 @@ def upload():
         try:
             df = pd.read_csv(file)
 
-            G = nx.DiGraph()
+            if graph_type == 'directed':
+                G = nx.DiGraph()
+            else:
+                G = nx.Graph()
 
             for _, row in df.iterrows():
                 source = row['From']
@@ -46,6 +53,7 @@ def upload():
         
     return jsonify({'error': 'Invalid file format. Please upload a csv file'}), 400
 
+
 # route to get the graph data
 @api_bp.route('/api/graph/<graph_id>', methods=['GET'])
 def get_graph(graph_id):
@@ -61,6 +69,7 @@ def get_graph(graph_id):
         'nodes': nodes,
         'edges': edges
     }), 200
+
 
 # route to get all graphs
 @api_bp.route('/api/graphs', methods=['GET'])
