@@ -5,6 +5,9 @@ from app.routes import api_bp
 def create_app(test_config=None):
     app = Flask(__name__)
 
+    # dict to store user's graphs
+    app.user_graphs = {}
+
     # load default config
     app.config.from_mapping(
         SECRET_KEY='dev',
@@ -15,7 +18,7 @@ def create_app(test_config=None):
         app.config.from_mapping(test_config)
 
     # enable CORS for frontend requests
-    CORS(app)
+    CORS(app, supports_credentials=True)
 
     # register blueprints
     app.register_blueprint(api_bp)
