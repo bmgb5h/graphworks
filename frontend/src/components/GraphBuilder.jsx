@@ -4,28 +4,20 @@ import { DataSet } from "vis-data";
 import { parse } from "papaparse";
 import "vis-network/dist/dist/vis-network.css";
 
-// TODO: Break down the component into smaller components
 const GraphBuilder = () => {
-  // State to manage the current algorithm for the graph traversal
   const [algorithm, setAlgorithm] = useState("dijkstra");
-  // State for the new node name input
   const [newNodeName, setNewNodeName] = useState("");
-  // Data sets to store nodes and edges
   const [networkNodes] = useState(new DataSet([]));
   const [networkEdges] = useState(new DataSet([]));
-  // States for the selected item and its type (node or edge)
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedItemType, setSelectedItemType] = useState(null);
 
-  // Ref to hold the network container element and the network instance
   const networkContainer = useRef(null);
   const networkInstance = useRef(null);
 
-  // Effect hook to initialize the graph when the component is mounted
   useEffect(() => {
     if (networkContainer.current) {
       const options = {
-        // Node and edge styling options
         nodes: {
           shape: "circle",
           size: 30,
@@ -51,7 +43,6 @@ const GraphBuilder = () => {
             roundness: 0.2
           }
         },
-        // Physics options to make the graph dynamic
         physics: {
           enabled: true,
           barnesHut: {
@@ -62,11 +53,24 @@ const GraphBuilder = () => {
             damping: 0.09
           }
         },
-        // Manipulation settings for edge creation
         manipulation: {
           enabled: false,
-          addEdge: function (edgeData, callback) {
+          addEdge: function(edgeData, callback) {
+            const { from, to } = edgeData;
+
+            // Check if this exact edge already exists
+            const existingEdges = networkEdges.get().filter(edge =>
+                edge.from === from && edge.to === to
+            );
+
+            if (existingEdges.length > 0) {
+              alert("This edge already exists!");
+              callback(null);
+              return;
+            }
+
             const weight = prompt("Enter edge weight (non-negative number):", "1");
+
             if (weight !== null && !isNaN(Number(weight)) && Number(weight) >= 0) {
               edgeData.label = weight;
               callback(edgeData);
@@ -75,7 +79,6 @@ const GraphBuilder = () => {
             }
           }
         },
-        // Interaction settings for node and edge manipulation
         interaction: {
           hover: true,
           multiselect: false,
@@ -83,14 +86,12 @@ const GraphBuilder = () => {
         }
       };
 
-      // Initialize the network instance with nodes and edges
       networkInstance.current = new Network(
           networkContainer.current,
           {nodes: networkNodes, edges: networkEdges},
           options
       );
 
-      // Event listener for selecting nodes and edges on click
       networkInstance.current.on("click", function (params) {
         if (params.nodes.length > 0) {
           setSelectedItem(params.nodes[0]);
@@ -105,65 +106,12 @@ const GraphBuilder = () => {
         }
       });
 
-      // Clean up the network instance when the component is unmounted
       return () => {
         networkInstance.current.destroy();
       };
     }
   }, [networkNodes, networkEdges]);
 
-  // Setup handler for adding edges to the graph
-  const setupAddEdgeHandler = () => {
-    if (networkInstance.current) {
-      networkInstance.current.off("addEdge");
-
-      networkInstance.current.on("addEdge", function (edgeData, callback) {
-        const { from, to } = edgeData;
-
-        // Check if an edge already exists between these nodes
-        const existingEdges = networkEdges.get({
-          filter: (edge) => (edge.from === from && edge.to === to) || (edge.from === to && edge.to === from)
-        });
-
-        // If an edge already exists, prevent adding a duplicate
-        if (existingEdges.length > 0) {
-          alert("Edge already exists between these nodes!");
-          callback(null); // Prevent adding the edge
-          return; // Exit the function to prevent further execution
-        }
-
-        // Prompt for edge weight if no existing edge
-        const weight = prompt("Enter edge weight (non-negative number):", "1");
-
-        if (weight !== null && !isNaN(Number(weight)) && Number(weight) >= 0) {
-          const newEdge = {
-            ...edgeData,
-            label: weight,
-            smooth: {
-              enabled: true,
-              type: "curvedCW",
-              roundness: 0.2
-            }
-          };
-
-          // Proceed to add the edge
-          callback(newEdge);
-        } else {
-          callback(null); // If weight is invalid, prevent adding the edge
-        }
-      });
-    }
-  };
-
-
-  // Run edge handler setup on component mount
-  useEffect(() => {
-    if (networkInstance.current) {
-      setupAddEdgeHandler();
-    }
-  }, []);
-
-  // Function to add a new node
   const addNode = () => {
     if (newNodeName.trim() === "") {
       alert("Node name cannot be empty!");
@@ -175,28 +123,22 @@ const GraphBuilder = () => {
       return;
     }
 
-    // Add the node to the network
     networkNodes.add({
       id: newNodeName,
       label: newNodeName
     });
 
-    // Reset the new node name input field
     setNewNodeName("");
   };
 
-  // Function to enable edge creation mode
   const connectNodes = () => {
     if (!networkInstance.current) return;
-    setupAddEdgeHandler();
     networkInstance.current.addEdgeMode();
   };
 
-  // Function to delete the selected item (node or edge)
   const deleteSelected = () => {
     if (selectedItem) {
       if (selectedItemType === "node") {
-        // Remove edges connected to this node before deleting the node itself
         const connectedEdges = networkEdges.get({
           filter: (edge) =>
               edge.from === selectedItem || edge.to === selectedItem
@@ -204,15 +146,13 @@ const GraphBuilder = () => {
         networkEdges.remove(connectedEdges);
         networkNodes.remove(selectedItem);
       } else if (selectedItemType === "edge") {
-        networkEdges.remove(selectedItem);
+        networkEdges.remove(selectedItem.id);
       }
       setSelectedItem(null);
       setSelectedItemType(null);
     }
   };
 
-  // TODO: Fix function so that it visualizes the csv graph
-  // Handle file upload and parse CSV to create nodes and edges
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
@@ -231,7 +171,6 @@ const GraphBuilder = () => {
           edges.push({ from: source, to: target, label: weight });
         });
 
-        // Add nodes and edges to the network
         nodes.forEach((node) => {
           networkNodes.add({ id: node, label: node });
         });
@@ -240,7 +179,6 @@ const GraphBuilder = () => {
     });
   };
 
-  // Event listener for the "Delete" or "Backspace" keys to remove selected items
   useEffect(() => {
     const handleKeyDown = (event) => {
       if ((event.key === "Delete" || event.key === "Backspace") && selectedItem) {
@@ -254,7 +192,6 @@ const GraphBuilder = () => {
 
   return (
       <div className="flex flex-col gap-4 p-4">
-        {/* Add Node Section */}
         <div className="flex flex-col gap-4 border p-4 rounded bg-gray-100">
           <h2 className="text-lg font-semibold">Add Node</h2>
           <div className="flex gap-2">
@@ -281,7 +218,6 @@ const GraphBuilder = () => {
           </div>
         </div>
 
-        {/* Graph Settings Section */}
         <div className="flex flex-col gap-4 border p-4 rounded bg-gray-100">
           <h2 className="text-lg font-semibold">Graph Settings</h2>
           <div className="flex gap-4 items-center">
@@ -298,7 +234,6 @@ const GraphBuilder = () => {
           </div>
         </div>
 
-        {/* Import/Export Section */}
         <div className="flex flex-col gap-4 border p-4 rounded bg-gray-100">
           <h2 className="text-lg font-semibold">Import/Export</h2>
           <div className="flex gap-2">
@@ -320,7 +255,6 @@ const GraphBuilder = () => {
           </div>
         </div>
 
-        {/* Instructions Section */}
         <div className="mt-4 p-2 bg-gray-200 rounded text-sm">
           <p>
             <strong>Selected: </strong>
@@ -341,7 +275,6 @@ const GraphBuilder = () => {
           </ul>
         </div>
 
-        {/* Graph Visualization Container */}
         <div
             ref={networkContainer}
             style={{width: "100%", height: "70vh", border: "1px solid #ddd"}}
