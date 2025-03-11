@@ -1,9 +1,9 @@
-import CsvUploader from "./components/CsvUploader";
+import GraphBuilder from "./components/GraphBuilder";
 
-function App() {
+const App = () => {
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <CsvUploader />
+    <div>
+      <GraphBuilder />
     </div>
   );
 }
