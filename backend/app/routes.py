@@ -1,86 +1,51 @@
 from uuid import uuid4
 import networkx as nx
-import pandas as pd
 from flask import Blueprint, jsonify, request, current_app
 
 
 api_bp = Blueprint('api', __name__)
 
 
-# route to receive and parse the uploaded CSV file
-@api_bp.route('/api/upload', methods=['POST'])
-def upload():
-    if 'file' not in request.files:
-        return jsonify({'error': 'No file part'}), 400
-    
-    file = request.files['file']
+@api_bp.route('/api/graph', methods=['POST'])
+def create_graph():
+    data = request.json
 
-    if file.filename == '':
-        return jsonify({'error': 'No selected file'}), 400
+    graph = nx.DiGraph()
+    graph.add_weighted_edges_from(
+        [(edge['from'], edge['to'], edge['weight']) for edge in data['edges']]
+    )
 
-    # get the graph type from the form data
-    graph_type = request.form.get('graph_type', 'directed')
+    graph_id = str(uuid4())
 
-    if file and file.filename.endswith('.csv'):
-        # generate a unique ID for the graph
-        graph_id = str(uuid4())
+    current_app.user_graphs[graph_id] = graph
 
-        try:
-            df = pd.read_csv(file)
-
-            if graph_type == 'directed':
-                G = nx.DiGraph()
-            else:
-                G = nx.Graph()
-
-            for _, row in df.iterrows():
-                source = row['From']
-                target = row['To']
-                cost = row['Cost']
-
-                G.add_edge(source, target, weight=cost)
-
-            current_app.user_graphs[graph_id] = G
-
-            return jsonify({
-                'graph_id': graph_id,
-                'nodes': len(G.nodes),
-                'edges': len(G.edges)
-            }), 200
-        
-        except Exception as e:
-            return jsonify({'error': str(e)}), 500
-        
-    return jsonify({'error': 'Invalid file format. Please upload a csv file'}), 400
+    return jsonify({'graph_id': graph_id}), 201
 
 
-# route to get the graph data
 @api_bp.route('/api/graph/<graph_id>', methods=['GET'])
 def get_graph(graph_id):
-    G = current_app.user_graphs.get(graph_id)
+    graph = current_app.user_graphs.get(graph_id)
 
-    if not G:
+    if graph is None:
         return jsonify({'error': 'Graph not found'}), 404
-    
-    nodes = [{'id': node} for node in G.nodes]
-    edges = [{'source': u, 'target': v, 'weight': d['weight']} for u, v, d in G.edges(data=True)]
 
-    return jsonify({
-        'nodes': nodes,
-        'edges': edges
-    }), 200
+    return jsonify({'graph': nx.to_dict_of_dicts(graph)}), 200
 
 
-# route to get all graphs
-@api_bp.route('/api/graphs', methods=['GET'])
-def get_graphs():
-    graphs = []
+@api_bp.route('/api/graph/', methods=['GET'])
+def get_all_graphs():
+    return jsonify({'graph_ids': list(current_app.user_graphs.keys())}), 200
 
-    for graph_id, G in current_app.user_graphs.items():
-        graphs.append({
-            'id': graph_id,
-            'nodes': len(G.nodes),
-            'edges': len(G.edges)
-        })
 
-    return jsonify(graphs), 200
+@api_bp.route('/api/graph/<graph_id>', methods=['DELETE'])
+def delete_graph(graph_id):
+    graph = current_app.user_graphs.pop(graph_id, None)
+
+    if graph is None:
+        return jsonify({'error': 'Graph not found'}), 404
+
+    return '', 204
+
+
+# TODO: eventually the graphs should be stored in a database
+# TODO: add

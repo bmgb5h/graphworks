@@ -1,10 +1,3 @@
-/**
- * GraphBuilder Component
- *
- * A React component that creates an interactive graph visualization using vis-network library.
- * Allows users to create nodes, connect them with weighted edges, and manipulate the graph.
- * Supports graph algorithm selection and CSV import functionality.
- */
 import { useState, useEffect, useRef } from "react";
 import { Network } from "vis-network";
 import { DataSet } from "vis-data";
@@ -12,30 +5,18 @@ import { parse } from "papaparse";
 import "vis-network/dist/dist/vis-network.css";
 
 const GraphBuilder = () => {
-  // Algorithm selection state
-  const [algorithm, setAlgorithm] = useState("dijkstra");
-  // State for the new node name input field
+  // State variables
   const [newNodeName, setNewNodeName] = useState("");
-  // DataSet to store graph nodes - using vis-network's DataSet for efficient updates
   const [networkNodes] = useState(new DataSet([]));
-  // DataSet to store graph edges with weight information
   const [networkEdges] = useState(new DataSet([]));
-  // Currently selected node or edge
   const [selectedItem, setSelectedItem] = useState(null);
-  // Type of the selected item ('node' or 'edge')
   const [selectedItemType, setSelectedItemType] = useState(null);
-  // Debug information to display network status
-  const [debugInfo, setDebugInfo] = useState({nodesCount: 0, edgesCount: 0, lastAction: "None"});
 
-  // Reference to the DOM element where the network will be rendered
+  // References
   const networkContainer = useRef(null);
-  // Reference to the vis-network instance
   const networkInstance = useRef(null);
 
-  /**
-   * Initialize the network visualization with configuration options
-   * Sets up event listeners for handling node/edge selection
-   */
+  // Initialize the network visualization
   useEffect(() => {
     if (networkContainer.current) {
       try {
@@ -60,12 +41,11 @@ const GraphBuilder = () => {
             arrows: {
               to: {
                 enabled: true,
-                scaleFactor: 1.5,  // Larger arrows for better visibility
-                type: 'arrow',
-                width: 2,
-                color: '#333'
+                scaleFactor: 1.5,
+                type: 'arrow'
               }
             },
+            color: "#333",
             smooth: {
               type: "curvedCW",
               roundness: 0.2
@@ -101,10 +81,10 @@ const GraphBuilder = () => {
               const weight = prompt("Enter edge weight (non-negative number):", "1");
 
               if (weight !== null && !isNaN(Number(weight)) && Number(weight) >= 0) {
-                edgeData.label = weight;  // Set the weight as the edge label
-                callback(edgeData);       // Accept the edge with the weight
+                edgeData.label = weight;
+                callback(edgeData);
               } else {
-                callback(null);           // Cancel edge creation if invalid weight
+                callback(null);
               }
             }
           },
@@ -122,32 +102,21 @@ const GraphBuilder = () => {
             options
         );
 
-        // Update debug info after initialization
-        setDebugInfo(prev => ({
-          ...prev,
-          lastAction: "Network initialized",
-          containerSize: `${networkContainer.current.clientWidth}x${networkContainer.current.clientHeight}`
-        }));
-
         // Handle click events for node/edge selection
         networkInstance.current.on("click", function (params) {
           if (params.nodes.length > 0) {
-            // Node clicked - set as selected item
             setSelectedItem(params.nodes[0]);
             setSelectedItemType("node");
           } else if (params.edges.length > 0) {
-            // Edge clicked - get edge data and set as selected item
             const edge = networkEdges.get(params.edges[0]);
             setSelectedItem(edge);
             setSelectedItemType("edge");
           } else {
-            // Background clicked - clear selection
             setSelectedItem(null);
             setSelectedItemType(null);
           }
         });
 
-        // Clean up network on unmount
         return () => {
           if (networkInstance.current) {
             networkInstance.current.destroy();
@@ -155,29 +124,11 @@ const GraphBuilder = () => {
         };
       } catch (error) {
         console.error("Error initializing network:", error);
-        setDebugInfo(prev => ({
-          ...prev,
-          lastAction: `Network initialization error: ${error.message}`
-        }));
       }
     }
-  }, []);  // Only run on component mount
+  }, []);
 
-  /**
-   * Update debug counters whenever nodes or edges change
-   */
-  useEffect(() => {
-    setDebugInfo(prev => ({
-      ...prev,
-      nodesCount: networkNodes.length,
-      edgesCount: networkEdges.length
-    }));
-  }, [networkNodes, networkEdges]);
-
-  /**
-   * Add a new node to the graph
-   * Validates that the node name is unique and not empty
-   */
+  // Add a new node to the graph
   const addNode = () => {
     if (newNodeName.trim() === "") {
       alert("Node name cannot be empty!");
@@ -190,37 +141,24 @@ const GraphBuilder = () => {
     }
 
     try {
-      // Add the node to the network
       networkNodes.add({
         id: newNodeName,
         label: newNodeName
       });
-      setDebugInfo(prev => ({...prev, lastAction: `Added node: ${newNodeName}`}));
     } catch (error) {
       console.error("Error adding node:", error);
-      setDebugInfo(prev => ({...prev, lastAction: `Node add error: ${error.message}`}));
     }
 
-    setNewNodeName("");  // Clear the input field after adding
+    setNewNodeName("");
   };
 
-  /**
-   * Enter edge creation mode
-   * Allows the user to connect two nodes by clicking on them
-   */
+  // Enter edge creation mode
   const connectNodes = () => {
-    if (!networkInstance.current) {
-      setDebugInfo(prev => ({...prev, lastAction: "Connect failed: Network not initialized"}));
-      return;
-    }
+    if (!networkInstance.current) return;
     networkInstance.current.addEdgeMode();
-    setDebugInfo(prev => ({...prev, lastAction: "Connect mode activated"}));
   };
 
-  /**
-   * Delete the currently selected node or edge
-   * When deleting a node, also removes all connected edges
-   */
+  // Delete the currently selected node or edge
   const deleteSelected = () => {
     if (selectedItem) {
       try {
@@ -234,40 +172,29 @@ const GraphBuilder = () => {
 
           // Then remove the node itself
           networkNodes.remove(selectedItem);
-          setDebugInfo(prev => ({...prev, lastAction: `Deleted node: ${selectedItem}`}));
         } else if (selectedItemType === "edge") {
-          // Remove the selected edge
           networkEdges.remove(selectedItem.id);
-          setDebugInfo(prev => ({...prev, lastAction: `Deleted edge: ${selectedItem.id}`}));
         }
         setSelectedItem(null);
         setSelectedItemType(null);
       } catch (error) {
         console.error("Error deleting item:", error);
-        setDebugInfo(prev => ({...prev, lastAction: `Delete error: ${error.message}`}));
       }
     }
   };
 
-  /**
-   * Import graph data from a CSV file
-   * Expected CSV format has columns: From, To, Cost
-   * @param {Event} event - The file input change event
-   */
+  // Import graph data from a CSV file
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
     if (!file) return;
 
-    setDebugInfo(prev => ({...prev, lastAction: `Parsing file: ${file.name}`}));
-
     parse(file, {
-      header: true,  // Assume CSV has header row
+      header: true,
       complete: (results) => {
         const { data } = results;
 
         try {
           console.log("First row of CSV:", data[0]);
-          setDebugInfo(prev => ({...prev, rowsInCSV: data.length, csvSample: JSON.stringify(data[0])}));
 
           // Clear existing nodes and edges
           networkNodes.clear();
@@ -278,7 +205,7 @@ const GraphBuilder = () => {
           const edgesToAdd = [];
           const edgeMap = new Map();
 
-          // Process each row in the CSV - use the exact column names you specified
+          // Process each row in the CSV
           data.forEach((row, index) => {
             const source = row["From"];
             const target = row["To"];
@@ -319,20 +246,12 @@ const GraphBuilder = () => {
           networkNodes.add(nodesToAdd);
           networkEdges.add(edgesToAdd);
 
-          setDebugInfo(prev => ({
-            ...prev,
-            lastAction: `CSV processed: ${nodesToAdd.length} nodes, ${edgesToAdd.length} edges`,
-            uniqueNodes: nodesToAdd.length,
-            uniqueEdges: edgesToAdd.length
-          }));
-
           // Adjust view to fit all nodes
           if (networkInstance.current) {
             networkInstance.current.fit({ animation: true });
           }
         } catch (error) {
           console.error("Error processing CSV data:", error);
-          setDebugInfo(prev => ({...prev, lastAction: `CSV processing error: ${error.message}`}));
         }
       },
       skipEmptyLines: true,
@@ -343,9 +262,7 @@ const GraphBuilder = () => {
     });
   };
 
-  /**
-   * Set up keyboard event listeners for deletion shortcuts
-   */
+  // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event) => {
       if ((event.key === "Delete" || event.key === "Backspace") && selectedItem) {
@@ -357,12 +274,84 @@ const GraphBuilder = () => {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [selectedItem]);
 
+  // Process the graph and send to backend
+  const processGraph = () => {
+    if (networkNodes.length === 0) {
+      alert("Please create a graph first!");
+      return;
+    }
+
+    const nodes = networkNodes.get();
+    const edges = networkEdges.get();
+
+    // Prepare data for backend
+    const graphData = {
+      nodes: nodes.map(node => ({
+        label: node.label
+      })),
+      edges: edges.map(edge => ({
+        from: edge.from,
+        to: edge.to,
+        weight: parseFloat(edge.label) || 1
+      }))
+    };
+
+    // Send data to backend
+    console.log("Sending graph data to backend:", graphData);
+
+    try {
+      fetch('http://127.0.0.1:5000/api/graph', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(graphData),
+      })
+          .then(response => {
+            if (!response.ok) {
+              throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+            return response.json();
+          })
+          .then(data => {
+            console.log('Success:', data);
+            alert("Graph processing complete!");
+          })
+          .catch((error) => {
+            console.error('Error:', error);
+            alert(`Error processing graph: ${error.message}. Make sure the backend server is running at http://127.0.0.1:5000.`);
+          });
+    } catch (error) {
+      console.error('Fetch error:', error);
+      alert(`Failed to connect to backend server: ${error.message}`);
+    }
+  };
+
   return (
       <div className="flex flex-col gap-4 p-4">
-        {/* Node creation interface */}
-        <div className="flex flex-col gap-4 border p-4 rounded bg-gray-100">
-          <h2 className="text-lg font-semibold">Add Node</h2>
-          <div className="flex gap-2">
+        {/* Instructions at the top */}
+        <div className="p-3 bg-gray-100 rounded border">
+          <h2 className="text-lg font-semibold mb-2">Graph Builder Instructions</h2>
+          <ul className="list-disc pl-5">
+            <li>Add nodes using the input field below</li>
+            <li>Click "Connect Nodes" to create an edge, then <strong>drag from one node to another</strong></li>
+            <li>Enter a weight when prompted for each edge</li>
+            <li>Select a node or edge and press Delete or click "Delete Selected" to remove it</li>
+            <li>Import a graph from CSV file or build manually</li>
+            <li>Click "Process Graph" when you're done</li>
+          </ul>
+        </div>
+
+        {/* Graph visualization container*/}
+        <div
+            ref={networkContainer}
+            style={{width: "100%", height: "75vh", border: "1px solid #ddd"}}
+            className="bg-white"
+        />
+
+        {/* Controls below the graph */}
+        <div className="flex flex-col gap-3 border p-3 rounded bg-gray-50 mt-2">
+          <div className="flex gap-2 items-center">
             <input
                 type="text"
                 placeholder="Node Name"
@@ -383,36 +372,6 @@ const GraphBuilder = () => {
             >
               Connect Nodes
             </button>
-          </div>
-        </div>
-
-        {/* Algorithm selection controls */}
-        <div className="flex flex-col gap-4 border p-4 rounded bg-gray-100">
-          <h2 className="text-lg font-semibold">Graph Settings</h2>
-          <div className="flex gap-4 items-center">
-            <label>Algorithm:</label>
-            <select
-                value={algorithm}
-                onChange={(e) => setAlgorithm(e.target.value)}
-                className="border p-2 rounded w-48"
-            >
-              <option value="dijkstra">Dijkstra&#39;s</option>
-              <option value="astar">A*</option>
-              <option value="bidirectional">Bidirectional</option>
-            </select>
-          </div>
-        </div>
-
-        {/* File import and deletion controls */}
-        <div className="flex flex-col gap-4 border p-4 rounded bg-gray-100">
-          <h2 className="text-lg font-semibold">Import/Export</h2>
-          <div className="flex gap-2">
-            <input
-                type="file"
-                accept=".csv"
-                onChange={handleFileUpload}
-                className="p-2 border rounded"
-            />
             <button
                 onClick={deleteSelected}
                 disabled={!selectedItem}
@@ -422,36 +381,33 @@ const GraphBuilder = () => {
             >
               Delete Selected
             </button>
-          </div>
-        </div>
 
-        {/* User instructions and selection information */}
-        <div className="mt-4 p-2 bg-gray-200 rounded text-sm">
-          <p>
+            <div className="flex items-center ml-auto">
+              <input
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileUpload}
+                  className="p-1 border rounded"
+              />
+              <button
+                  onClick={processGraph}
+                  className="p-2 bg-purple-600 text-white rounded ml-2"
+              >
+                Process Graph
+              </button>
+            </div>
+          </div>
+
+          {/* Selected item information */}
+          <div className="text-sm">
             <strong>Selected: </strong>
             {selectedItem
                 ? selectedItemType === "node"
                     ? `Node: ${selectedItem}`
                     : `Edge: (${selectedItem.from}, ${selectedItem.to})`
                 : "Nothing selected"}
-          </p>
-          <p className="mt-2"><strong>Instructions:</strong></p>
-          <ul className="list-disc pl-5">
-            <li>Add nodes using &ldquo;Add Node&ldquo;</li>
-            <li>Click &ldquo;Connect Nodes&ldquo; to create an edge between two nodes</li>
-            <li>Enter a weight when prompted for each edge</li>
-            <li>Select a node or edge to delete it</li>
-            <li>Drag nodes to reposition them</li>
-            <li>Upload a CSV with columns: From, To, Cost</li>
-          </ul>
+          </div>
         </div>
-
-        {/* Graph visualization container */}
-        <div
-            ref={networkContainer}
-            style={{width: "100%", height: "70vh", border: "1px solid #ddd"}}
-            className="bg-white"
-        />
       </div>
   );
 }
