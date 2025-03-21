@@ -7,6 +7,7 @@ def create_app(test_config=None):
     app = Flask(__name__)
 
     # dict to store user's graphs
+    # TODO: store this in a database
     app.user_graphs = {}
 
     # load default config
@@ -19,7 +20,7 @@ def create_app(test_config=None):
         app.config.from_mapping(test_config)
 
     # enable CORS for frontend requests
-    CORS(app, supports_credentials=True)
+    CORS(app)
 
     # register blueprints
     app.register_blueprint(api_bp)
