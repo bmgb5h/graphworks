@@ -2,6 +2,8 @@ from uuid import uuid4
 import networkx as nx
 from flask import Blueprint, jsonify, request, current_app
 
+import app.utils as utils
+
 
 api_bp = Blueprint('api', __name__)
 
@@ -47,5 +49,17 @@ def delete_graph(graph_id):
     return '', 204
 
 
+@api_bp.route('/api/graph/<graph_id>/tsp', methods=['GET'])
+def get_tsp(graph_id):
+    graph = current_app.user_graphs.get(graph_id)
+
+    if graph is None:
+        return jsonify({'error': 'Graph not found'}), 404
+
+    try:
+        tsp_path = utils.traveling_salesman_path(graph)
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    return jsonify({'tsp_path': tsp_path}), 200
+
 # TODO: eventually the graphs should be stored in a database
-# TODO: add
