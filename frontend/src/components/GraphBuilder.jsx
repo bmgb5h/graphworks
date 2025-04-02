@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { Network } from "vis-network";
 import { DataSet } from "vis-data";
 import { parse } from "papaparse";
@@ -11,6 +12,7 @@ const GraphBuilder = () => {
   const [networkEdges] = useState(new DataSet([]));
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedItemType, setSelectedItemType] = useState(null);
+  const navigate = useNavigate();
 
   // References
   const networkContainer = useRef(null);
@@ -181,6 +183,10 @@ const GraphBuilder = () => {
         console.error("Error deleting item:", error);
       }
     }
+  };
+
+  const goToGraphViewer = () => {
+    navigate("/graph/${graphId}");
   };
 
   // Import graph data from a CSV file
@@ -408,6 +414,14 @@ const GraphBuilder = () => {
                 : "Nothing selected"}
           </div>
         </div>
+        
+        {/* Button to navigate to graph viewer */}
+        <button
+            onClick={goToGraphViewer}
+            className="p-2 bg-yellow-500 text-white rounded mt-3"
+        >
+          Go to Graph Viewer
+        </button>
       </div>
   );
 }
