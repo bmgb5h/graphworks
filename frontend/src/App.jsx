@@ -1,5 +1,5 @@
 import {BrowserRouter as Router, Route, Routes} from "react-router-dom";
-import GraphBuilder from "./components/GraphBuilder";
+import GraphBuilder from "./components/GraphBuilder/GraphBuilder";
 import GraphViewer from "./components/GraphViewer";
 
 const App = () => {
