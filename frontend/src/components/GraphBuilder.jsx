@@ -106,7 +106,7 @@ const GraphBuilder = () => {
         console.error("Error initializing network:", error);
       }
     }
-  }, []);
+  }, [networkEdges, networkNodes]);
 
   // Add a new node to the graph
   const addNode = () => {
@@ -360,7 +360,7 @@ const GraphBuilder = () => {
       fetch('http://127.0.0.1:5000/api/graph', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Typ': 'application/json',
         },
         body: JSON.stringify(graphData),
       })
@@ -391,11 +391,11 @@ const GraphBuilder = () => {
           <h2 className="text-lg font-semibold mb-2">Graph Builder Instructions</h2>
           <ul className="list-disc pl-5">
             <li>Add nodes using the input field below</li>
-            <li>Click "Connect Nodes" to create an edge, then <strong>drag from one node to another</strong></li>
+            <li>Click &quot;Connect Nodes&quot; to create an edge, then <strong>drag from one node to another</strong></li>
             <li>Enter a weight when prompted for each edge</li>
-            <li>Select a node or edge and press Delete or click "Delete Selected" to remove it</li>
+            <li>Select a node or edge and press Delete or click &quot;Delete Selected&quot; to remove it</li>
             <li>Import a graph from CSV file or build manually</li>
-            <li>Click "Process Graph" when you're done</li>
+            <li>Click &quot;Process Graph&quot; when you&apos;re done</li>
           </ul>
         </div>
 
