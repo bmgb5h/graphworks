@@ -1,19 +1,12 @@
 const SelectedItemInfo = ({ selectedItem, selectedItemType }) => {
-  if (!selectedItem) {
-    return (
-      <div className="text-sm">
-        <strong>Selected: </strong>Nothing selected
-      </div>
-    );
-  }
-
-  const selectionText = selectedItemType === "node" 
-    ? `Node: ${selectedItem}`
-    : `Edge: (${selectedItem.from}, ${selectedItem.to})`;
-
   return (
-    <div className="text-sm">
-      <strong>Selected: </strong>{selectionText}
+    <div className="text-sm border-t pt-2 mt-1">
+      <strong>Selected: </strong>
+      {selectedItem
+        ? selectedItemType === "node"
+          ? `Node: ${selectedItem}`
+          : `Edge: (${selectedItem.from}, ${selectedItem.to})`
+        : "Nothing selected"}
     </div>
   );
 };

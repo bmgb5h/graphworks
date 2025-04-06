@@ -1,59 +1,19 @@
-// utils/graphUtils.js
 import { parse } from "papaparse";
 
-export const processGraphData = (nodes, edges) => {
-  // Prepare data for backend
-  const graphData = {
-    nodes: nodes.map(node => ({
-      label: node.label
-    })),
-    edges: edges.map(edge => ({
-      from: edge.from,
-      to: edge.to,
-      weight: parseFloat(edge.label) || 1
-    }))
-  };
-
-  // Send data to backend
-  console.log("Sending graph data to backend:", graphData);
-
-  try {
-    fetch('http://127.0.0.1:5000/api/graph', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(graphData),
-    })
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(data => {
-        console.log('Success:', data);
-        alert("Graph processing complete!");
-      })
-      .catch((error) => {
-        console.error('Error:', error);
-        alert(`Error processing graph: ${error.message}. Make sure the backend server is running at http://127.0.0.1:5000.`);
-      });
-  } catch (error) {
-    console.error('Fetch error:', error);
-    alert(`Failed to connect to backend server: ${error.message}`);
-  }
-};
-
-export const importFromCSV = (file, networkNodes, networkEdges, networkInstance) => {
+/**
+ * Process CSV data and update the network graph
+ * @param {File} file - The CSV file to process
+ * @param {DataSet} networkNodes - The vis.js nodes dataset
+ * @param {DataSet} networkEdges - The vis.js edges dataset
+ * @param {Object} networkInstance - Reference to the vis.js network instance
+ */
+export const processCSVData = (file, networkNodes, networkEdges, networkInstance) => {
   parse(file, {
     header: true,
-    complete: (results) => {
-      const { data } = results;
-
+    complete: results => {
       try {
-        console.log("First row of CSV:", data[0]);
-
+        const { data } = results;
+        
         // Clear existing nodes and edges
         networkNodes.clear();
         networkEdges.clear();
@@ -110,10 +70,11 @@ export const importFromCSV = (file, networkNodes, networkEdges, networkInstance)
         }
       } catch (error) {
         console.error("Error processing CSV data:", error);
+        alert(`Error processing CSV data: ${error.message}`);
       }
     },
     skipEmptyLines: true,
-    error: (error) => {
+    error: error => {
       console.error("Error parsing CSV:", error);
       alert("Error parsing CSV file. Please check the format.");
     }
