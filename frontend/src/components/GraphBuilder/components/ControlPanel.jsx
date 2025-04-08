@@ -6,7 +6,9 @@ const ControlPanel = ({
   deleteSelected,
   handleFileUpload,
   processGraph,
-  selectedItem
+  selectedItem,
+  undo,
+  history
 }) => {
   // Handle enter key in the node name input
   const handleKeyPress = (e) => {
@@ -50,6 +52,17 @@ const ControlPanel = ({
           >
             Delete Selected
           </button>
+	  <button
+	    onClick={undo}
+	    disabled={history.length === 0}
+	    className={`p-2 rounded whitespace-nowrap ${
+	      history.length > 0 
+	        ? "bg-yellow-500 text-white cursor-pointer hover:bg-yellow-600 transition" 
+	        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+	    }`}
+	  >
+	    Undo
+	</button>
         </div>
 
         {/* File and processing controls - will wrap to next line on small screens */}
