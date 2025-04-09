@@ -199,8 +199,43 @@ const GraphBuilder = () => {
       case "deleteEdge":
         networkEdges.add(lastAction.data);
         break;
+      case "clearGraph":
+        networkNodes.add(lastAction.data.nodes);
+        networkEdges.add(lastAction.data.edges);
+        break;
       default:
         console.warn("Unknown action:", lastAction);
+    }
+  };
+  const clearGraph = () => {
+    // Confirm with user before clearing
+    if (!window.confirm("Are you sure you want to clear the entire graph?")) {
+      return;
+    }
+
+    try {
+      // Save current state to history before clearing
+      const currentNodes = networkNodes.get();
+      const currentEdges = networkEdges.get();
+    
+      setHistory(prev => [...prev, {
+        type: "clearGraph",
+        data: {
+          nodes: currentNodes,
+          edges: currentEdges
+        }
+      }]);
+
+      // Clear all nodes and edges
+      networkNodes.clear();
+      networkEdges.clear();
+    
+      // Reset selection
+      setSelectedItem(null);
+      setSelectedItemType(null);
+    } catch (error) {
+      console.error("Error clearing graph:", error);
+      alert("Failed to clear graph");
     }
   };
   // Import graph data from a CSV file
@@ -275,6 +310,7 @@ const GraphBuilder = () => {
         selectedItem={selectedItem}
         undo={undo}
         history={history}
+        clearGraph={clearGraph}
       />
 
       {/* Display Graph ID if available */}

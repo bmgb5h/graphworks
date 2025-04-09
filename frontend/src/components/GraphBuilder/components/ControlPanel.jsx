@@ -8,7 +8,8 @@ const ControlPanel = ({
   processGraph,
   selectedItem,
   undo,
-  history
+  history,
+  clearGraph
 }) => {
   // Handle enter key in the node name input
   const handleKeyPress = (e) => {
@@ -63,6 +64,12 @@ const ControlPanel = ({
 	  >
 	    Undo
 	</button>
+	<button
+          onClick={clearGraph}
+          className="p-2 bg-orange-500 text-white rounded whitespace-nowrap cursor-pointer hover:bg-orange-600 transition"
+        >
+          Clear Graph
+        </button>
         </div>
 
         {/* File and processing controls - will wrap to next line on small screens */}
