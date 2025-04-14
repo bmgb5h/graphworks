@@ -9,6 +9,7 @@ import app.utils as utils
 
 api_bp = Blueprint('api', __name__)
 
+# user routes
 
 @api_bp.route('/api/user/', methods=['GET'])
 def get_all_users():
@@ -26,7 +27,7 @@ def create_user():
 
     try:
         new_user = User(
-            id=1,
+            id=2,  # TODO: swap to UUID
             username=data['username'],
             email=data['email'],
             password_hash=data['password']  # TODO: hash the password
@@ -45,11 +46,70 @@ def create_user():
         return jsonify({"error": str(e)}), 500
 
 
+@api_bp.route('/api/user/<int:user_id>/', methods=['DELETE'])
+def delete_user(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    try:
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({"message": "User deleted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@api_bp.route('/api/user/<int:user_id>/graph', methods=['GET'])
+def get_user_graphs(user_id):
+    graphs = Graph.query.filter_by(user_id=user_id).all()
+    graph_ids = [graph.id for graph in graphs]
+    return jsonify({'graph_ids': graph_ids}), 200
+
+
+@api_bp.route('/api/user/<int:user_id>/graph/<int:graph_id>/', methods=['GET'])
+def get_user_graph(user_id, graph_id):
+    graph = Graph.query.filter_by(user_id=user_id, id=graph_id).first()
+    if not graph:
+        return jsonify({"error": "Graph not found"}), 404
+
+    try:
+        graph_data = {
+            "id": graph.id,
+            "name": graph.name,
+            "user_id": graph.user_id,
+            "data": graph.data
+        }
+        return jsonify(graph_data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+ 
+# graph routes
+
 @api_bp.route('/api/graph/', methods=['GET'])
 def get_all_graphs():
     graphs = Graph.query.with_entities(Graph.id).all()
     graph_ids = [graph.id for graph in graphs]
     return jsonify({'graph_ids': graph_ids}), 200
+
+
+@api_bp.route('/api/graph/<int:graph_id>/', methods=['GET'])
+def get_graph(graph_id):
+    graph = Graph.query.get(graph_id)
+    if not graph:
+        return jsonify({"error": "Graph not found"}), 404
+
+    try:
+        graph_data = {
+            "id": graph.id,
+            "name": graph.name,
+            "user_id": graph.user_id,
+            "data": graph.data
+        }
+        return jsonify(graph_data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 
 @api_bp.route('/api/graph/', methods=['POST'])
@@ -61,7 +121,7 @@ def create_graph():
 
     try:
         new_graph = Graph(
-            id=1,
+            id=2,  # TODO: swap to UUID
             name=data['name'],
             user_id=data['user_id'],
             data=data['data']
@@ -78,39 +138,3 @@ def create_graph():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
-
-
-@api_bp.route('/api/graph/<graph_id>', methods=['GET'])
-def get_graph(graph_id):
-    graph = current_app.user_graphs.get(graph_id)
-
-    if graph is None:
-        return jsonify({'error': 'Graph not found'}), 404
-
-    return jsonify({'graph': nx.to_dict_of_dicts(graph)}), 200
-
-
-@api_bp.route('/api/graph/<graph_id>', methods=['DELETE'])
-def delete_graph(graph_id):
-    graph = current_app.user_graphs.pop(graph_id, None)
-
-    if graph is None:
-        return jsonify({'error': 'Graph not found'}), 404
-
-    return '', 204
-
-
-@api_bp.route('/api/graph/<graph_id>/tsp', methods=['GET'])
-def get_tsp(graph_id):
-    graph = current_app.user_graphs.get(graph_id)
-
-    if graph is None:
-        return jsonify({'error': 'Graph not found'}), 404
-
-    try:
-        tsp_path = utils.traveling_salesman_path(graph)
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
-    return jsonify({'tsp_path': tsp_path}), 200
-
-# TODO: eventually the graphs should be stored in a database

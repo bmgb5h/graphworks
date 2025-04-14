@@ -1,6 +1,7 @@
+from .base import BaseModel
 from app.extensions import db
 
-class Graph(db.Model):
+class Graph(BaseModel):
     __tablename__ = 'graphs'
 
     id = db.Column(db.Integer, primary_key=True)
