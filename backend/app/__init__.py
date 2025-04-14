@@ -1,28 +1,30 @@
 from flask import Flask
 from flask_cors import CORS
+
 from app.routes import api_bp
+from app.extensions import db, migrate
 
 
 def create_app(test_config=None):
-    app = Flask(__name__)
+    app = Flask(__name__, instance_relative_config=True)
 
-    # dict to store user's graphs
-    # TODO: store this in a database
-    app.user_graphs = {}
+    # set up app configuration
+    app.config.from_object('config.Config')
+    app.config.from_pyfile('config.py', silent=True)
 
-    # load default config
-    app.config.from_mapping(
-        SECRET_KEY='dev',
-    )
-
-    # override default config with test config if provided
+    # override config with test config if provided
     if test_config:
         app.config.from_mapping(test_config)
+
+    db.init_app(app)
+    migrate.init_app(app, db)
 
     # enable CORS for frontend requests
     CORS(app)
 
     # register blueprints
     app.register_blueprint(api_bp)
+
+    from app.models import User, Graph
 
     return app
