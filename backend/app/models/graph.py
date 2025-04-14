@@ -1,4 +1,4 @@
-from ..extensions import db
+from app.extensions import db
 
 class Graph(db.Model):
     __tablename__ = 'graphs'
