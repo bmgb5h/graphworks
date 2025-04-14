@@ -1,6 +1,6 @@
-from uuid import uuid4
 import networkx as nx
 from flask import Blueprint, jsonify, request
+from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
 
 from app.models import User, Graph
 from app.extensions import db
@@ -8,6 +8,44 @@ import app.utils as utils
 
 
 api_bp = Blueprint('api', __name__)
+
+
+@api_bp.route('/api/register/', methods=['POST'])
+def register():
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"error": "Missing required fields"}), 400
+
+    try:
+        new_user = User(
+            username=data['username'],
+            email=data['email']
+        )
+        new_user.set_password(data['password'])
+
+        db.session.add(new_user)
+        db.session.commit()
+
+        return jsonify({
+            "message": "User created successfully",
+            "user_id": new_user.id
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+    
+
+@api_bp.route('/api/login/', methods=['POST'])
+def login():
+    data = request.get_json()
+    user = User.query.filter_by(username=data['username']).first()
+
+    if user and user.check_password(data['password']):
+        access_token = create_access_token(identity=str(user.id))
+        return jsonify(access_token=access_token), 200
+
+    return jsonify({"error": "Invalid credentials"}), 401
 
 # user routes
 
@@ -60,8 +98,10 @@ def delete_user(user_id):
         return jsonify({"error": str(e)}), 500
 
 
-@api_bp.route('/api/user/<int:user_id>/graph', methods=['GET'])
-def get_user_graphs(user_id):
+@api_bp.route('/api/graph', methods=['GET'])
+@jwt_required()
+def get_user_graphs():
+    user_id = get_jwt_identity()
     graphs = Graph.query.filter_by(user_id=user_id).all()
     graph_ids = [graph.id for graph in graphs]
     return jsonify({'graph_ids': graph_ids}), 200
@@ -95,6 +135,7 @@ def create_user_graph(user_id):
     
 
 @api_bp.route('/api/user/<int:user_id>/graph/<int:graph_id>/', methods=['DELETE'])
+@jwt_required()
 def delete_user_graph(user_id, graph_id):
     graph = Graph.query.filter_by(user_id=user_id, id=graph_id).first()
     if not graph:

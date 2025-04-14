@@ -2,7 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 
 from app.routes import api_bp
-from app.extensions import db, migrate
+from app.extensions import db, migrate, jwt
 
 
 def create_app(test_config=None):
@@ -18,6 +18,7 @@ def create_app(test_config=None):
 
     db.init_app(app)
     migrate.init_app(app, db)
+    jwt.init_app(app)
 
     # enable CORS for frontend requests
     CORS(app)
