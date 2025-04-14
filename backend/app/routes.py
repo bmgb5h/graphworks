@@ -27,7 +27,6 @@ def create_user():
 
     try:
         new_user = User(
-            id=str(uuid4()),
             username=data['username'],
             email=data['email'],
             password_hash=data['password']  # TODO: hash the password
@@ -77,7 +76,6 @@ def create_user_graph(user_id):
 
     try:
         new_graph = Graph(
-            id=str(uuid4()),
             name=data['name'],
             user_id=user_id,
             data=data['data']
