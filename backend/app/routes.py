@@ -49,7 +49,7 @@ def login():
     if not user.check_password(data['password']):
         return jsonify({"error": "Invalid password"}), 401
 
-    access_token = create_access_token(identity=user.id)
+    access_token = create_access_token(identity=str(user.id))
     return jsonify({
         "access_token": access_token,
         "user_id": user.id
@@ -199,3 +199,20 @@ def get_all_graphs():
     graphs = Graph.query.with_entities(Graph.id).all()
     graph_ids = [graph.id for graph in graphs]
     return jsonify({'graph_ids': graph_ids}), 200
+
+
+@api_bp.route('/api/debug/users/<int:user_id>/', methods=['DELETE'])
+def delete_any_user(user_id):
+    """Delete a user by ID."""
+    user = User.query.get(user_id)
+
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    try:
+        db.session.delete(user)
+        db.session.commit()
+        return jsonify({"message": "User deleted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
