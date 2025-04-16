@@ -1,5 +1,6 @@
 import networkx as nx
 
+
 def find_shortest_path(graph, source, target, algorithm='dijkstra'):
   
     if algorithm == 'dijkstra':
@@ -10,6 +11,7 @@ def find_shortest_path(graph, source, target, algorithm='dijkstra'):
         return nx.bidirectional_dijkstra(graph, source, target, weight='weight')[1]
     else:
         raise ValueError("Invalid algorithm. Choose 'dijkstra', 'astar', or 'bidirectional'.")
+
 
 #Link for traveling_salesman_problem function in NetworkX: https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.approximation.traveling_salesman.traveling_salesman_problem.html#networkx.algorithms.approximation.traveling_salesman.traveling_salesman_problem
 def traveling_salesman_path(graph, method='greedy'):
@@ -45,6 +47,7 @@ def complete_graph(graph):
 
     return complete_graph
 
+
 def reconstruct_path(graph, tsp_path):
 
     real_path = [tsp_path[0]]
@@ -62,3 +65,19 @@ def reconstruct_path(graph, tsp_path):
             real_path.extend(temp_path[1:])
         
     return real_path
+
+
+def get_path_cost(graph: nx.Graph, path: list) -> float:
+    """
+    Given a graph and a path, return the total cost of the path.
+    Raises a ValueError if the path does not exist in the graph.
+    """
+    cost: float = 0.0
+    for i in range(len(path) - 1):
+        u = path[i]
+        v = path[i + 1]
+
+        if not graph.has_edge(u, v):
+            raise ValueError(f"Edge from {u} to {v} does not exist in the graph.")
+        cost += graph[u][v]['weight']
+    return cost

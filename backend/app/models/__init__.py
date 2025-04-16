@@ -1,5 +1,5 @@
 from .user import User
 from .graph import Graph
-from .base import BaseModel
+from .tsp_run import TSPRun
 
-__all__ = ["User", "Graph", "BaseModel"]
+__all__ = ["User", "Graph", "TSPRun"]

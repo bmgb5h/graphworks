@@ -26,6 +26,6 @@ def create_app(test_config=None):
     # register blueprints
     app.register_blueprint(api_bp)
 
-    from app.models import User, Graph
+    from app.models import User, Graph, TSPRun
 
     return app

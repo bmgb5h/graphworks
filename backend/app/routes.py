@@ -1,8 +1,9 @@
 import networkx as nx
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import jwt_required, get_jwt_identity, create_access_token
+import time
 
-from app.models import User, Graph
+from app.models import User, Graph, TSPRun
 from app.extensions import db
 import app.utils as utils
 
@@ -176,8 +177,103 @@ def get_graph_tsp(graph_id):
         if not nx.is_strongly_connected(G):
             return jsonify({"error": "Graph must be strongly connected"}), 400
 
+        start_time = time.time()
         tsp_path = utils.traveling_salesman_path(G, algo)
-        return jsonify({"tsp_path": tsp_path}), 200
+        end_time = time.time()
+        cost = utils.get_path_cost(G, tsp_path)
+
+        tsp_run = TSPRun(
+            graph_id=graph.id,
+            algorithm=algo,
+            path=tsp_path,
+            cost=cost,
+            time_to_calculate=end_time - start_time
+        )
+        db.session.add(tsp_run)
+        db.session.commit()
+
+        return jsonify({
+            "tsp_path": tsp_path,
+            "cost": cost,
+            "time_to_calculate": end_time - start_time
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@api_bp.route('/api/graphs/<int:graph_id>/tsp/runs', methods=['GET'])
+@jwt_required()
+def get_graph_tsp_runs(graph_id):
+    """Get all TSP runs for a specific graph."""
+    user_id = get_jwt_identity()
+    graph = Graph.query.filter_by(user_id=user_id, id=graph_id).first()
+
+    if not graph:
+        return jsonify({"error": "Graph not found"}), 404
+
+    try:
+        tsp_runs = TSPRun.query.filter_by(graph_id=graph.id).all()
+        runs_data = [{
+            "id": run.id,
+            "algorithm": run.algorithm,
+            "path": run.path,
+            "cost": run.cost,
+            "time_to_calculate": run.time_to_calculate
+        } for run in tsp_runs]
+        return jsonify(runs_data), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@api_bp.route('/api/graphs/<int:graph_id>/tsp/runs/<int:run_id>/', methods=['DELETE'])
+@jwt_required()
+def delete_graph_tsp_run(graph_id, run_id):
+    """Delete a specific TSP run for a specific graph."""
+    user_id = get_jwt_identity()
+    graph = Graph.query.filter_by(user_id=user_id, id=graph_id).first()
+
+    if not graph:
+        return jsonify({"error": "Graph not found"}), 404
+
+    tsp_run = TSPRun.query.filter_by(graph_id=graph.id, id=run_id).first()
+
+    if not tsp_run:
+        return jsonify({"error": "TSP run not found"}), 404
+
+    try:
+        db.session.delete(tsp_run)
+        db.session.commit()
+        return jsonify({"message": "TSP run deleted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@api_bp.route('/api/graphs/<int:graph_id>/tsp/runs/<int:run_id>/', methods=['GET'])
+@jwt_required()
+def get_graph_tsp_run(graph_id, run_id):
+    """Get a specific TSP run for a specific graph."""
+    user_id = get_jwt_identity()
+    graph = Graph.query.filter_by(user_id=user_id, id=graph_id).first()
+
+    if not graph:
+        return jsonify({"error": "Graph not found"}), 404
+
+    tsp_run = TSPRun.query.filter_by(graph_id=graph.id, id=run_id).first()
+
+    if not tsp_run:
+        return jsonify({"error": "TSP run not found"}), 404
+
+    try:
+        run_data = {
+            "id": tsp_run.id,
+            "algorithm": tsp_run.algorithm,
+            "path": tsp_run.path,
+            "cost": tsp_run.cost,
+            "time_to_calculate": tsp_run.time_to_calculate
+        }
+        return jsonify(run_data), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
