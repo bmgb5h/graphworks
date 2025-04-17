@@ -11,7 +11,7 @@ import app.utils as utils
 api_bp = Blueprint('api', __name__)
 
 
-@api_bp.route('/api/register/', methods=['POST'])
+@api_bp.route('/api/register', methods=['POST'])
 def register():
     """Register a new user."""
     data = request.get_json()
@@ -38,7 +38,7 @@ def register():
         return jsonify({"error": str(e)}), 500
     
 
-@api_bp.route('/api/login/', methods=['POST'])
+@api_bp.route('/api/login', methods=['POST'])
 def login():
     """Login a user and return an access token."""
     data = request.get_json()
@@ -57,7 +57,7 @@ def login():
     }), 200
 
 
-@api_bp.route('/api/users/', methods=['DELETE'])
+@api_bp.route('/api/users', methods=['DELETE'])
 @jwt_required()
 def delete_user():
     """Delete a user."""
@@ -76,7 +76,7 @@ def delete_user():
         return jsonify({"error": str(e)}), 500
 
 
-@api_bp.route('/api/graphs/', methods=['GET'])
+@api_bp.route('/api/graphs', methods=['GET'])
 @jwt_required()
 def get_user_graphs():
     """Get all graphs for the logged-in user."""
@@ -86,7 +86,7 @@ def get_user_graphs():
     return jsonify({'graph_ids': graph_ids}), 200
 
 
-@api_bp.route('/api/graphs/', methods=['POST'])
+@api_bp.route('/api/graphs', methods=['POST'])
 @jwt_required()
 def create_user_graph():
     """Create a new graph for the logged-in user."""
@@ -114,7 +114,7 @@ def create_user_graph():
         return jsonify({"error": str(e)}), 500
 
 
-@api_bp.route('/api/graphs/<int:graph_id>/', methods=['GET'])
+@api_bp.route('/api/graphs/<int:graph_id>', methods=['GET'])
 @jwt_required()
 def get_user_graph(graph_id):
     """Get a specific graph for the logged-in user."""
@@ -136,7 +136,7 @@ def get_user_graph(graph_id):
         return jsonify({"error": str(e)}), 500
 
 
-@api_bp.route('/api/graphs/<int:graph_id>/', methods=['DELETE'])
+@api_bp.route('/api/graphs/<int:graph_id>', methods=['DELETE'])
 @jwt_required()
 def delete_user_graph(graph_id):
     """Delete a specific graph for the logged-in user."""
@@ -226,7 +226,7 @@ def get_graph_tsp_runs(graph_id):
         return jsonify({"error": str(e)}), 500
 
 
-@api_bp.route('/api/graphs/<int:graph_id>/tsp/runs/<int:run_id>/', methods=['DELETE'])
+@api_bp.route('/api/graphs/<int:graph_id>/tsp/runs/<int:run_id>', methods=['DELETE'])
 @jwt_required()
 def delete_graph_tsp_run(graph_id, run_id):
     """Delete a specific TSP run for a specific graph."""
@@ -250,7 +250,7 @@ def delete_graph_tsp_run(graph_id, run_id):
         return jsonify({"error": str(e)}), 500
 
 
-@api_bp.route('/api/graphs/<int:graph_id>/tsp/runs/<int:run_id>/', methods=['GET'])
+@api_bp.route('/api/graphs/<int:graph_id>/tsp/runs/<int:run_id>', methods=['GET'])
 @jwt_required()
 def get_graph_tsp_run(graph_id, run_id):
     """Get a specific TSP run for a specific graph."""
@@ -281,7 +281,7 @@ def get_graph_tsp_run(graph_id, run_id):
 #     DEBUGGING ROUTES     #
 ############################
 
-@api_bp.route('/api/debug/users/', methods=['GET'])
+@api_bp.route('/api/debug/users', methods=['GET'])
 def get_all_users():
     """Get all users."""
     users = User.query.with_entities(User.id).all()
@@ -289,7 +289,7 @@ def get_all_users():
     return jsonify({'user_ids': user_ids}), 200
  
 
-@api_bp.route('/api/debug/graphs/', methods=['GET'])
+@api_bp.route('/api/debug/graphs', methods=['GET'])
 def get_all_graphs():
     """Get all graphs."""
     graphs = Graph.query.with_entities(Graph.id).all()
@@ -297,7 +297,7 @@ def get_all_graphs():
     return jsonify({'graph_ids': graph_ids}), 200
 
 
-@api_bp.route('/api/debug/users/<int:user_id>/', methods=['DELETE'])
+@api_bp.route('/api/debug/users/<int:user_id>', methods=['DELETE'])
 def delete_any_user(user_id):
     """Delete a user by ID."""
     user = User.query.get(user_id)
