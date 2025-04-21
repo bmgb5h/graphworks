@@ -115,7 +115,11 @@ const TSPResult = () => {
 
     try {
       // First, fetch the graph structure
-      const graphResponse = await fetch(`http://127.0.0.1:5000/api/graph/${graphId.trim()}`);
+      const graphResponse = await fetch(`http://127.0.0.1:5000/api/graphs/${parseInt(graphId.trim())}`, {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        }
+      });
       
       if (!graphResponse.ok) {
         throw new Error(graphResponse.status === 404 
@@ -129,10 +133,15 @@ const TSPResult = () => {
         throw new Error(graphResponseData.error);
       }
 
-      const adjacencyList = graphResponseData.graph;
+      const nodeList = graphResponseData.data.nodes;
+      const edgeList = graphResponseData.data.edges;
       
       // Then, fetch the TSP solution
-      const tspResponse = await fetch(`http://127.0.0.1:5000/api/graph/${graphId.trim()}/tsp`);
+      const tspResponse = await fetch(`http://127.0.0.1:5000/api/graphs/${parseInt(graphId.trim())}/tsp`, {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        }
+      });
       
       if (!tspResponse.ok) {
         throw new Error(tspResponse.status === 404 
@@ -146,6 +155,9 @@ const TSPResult = () => {
         throw new Error(tspData.error);
       }
 
+      // Convert adjacency list to nodes and edges for vis-network
+      const { nodes, edges, edgeMap } = convertNodeEdgeListToGraph(nodeList, edgeList);
+
       // Check if we have a valid TSP path
       if (!tspData.tsp_path || tspData.tsp_path.length <= 1) {
         setError("No valid TSP path exists for this graph");
@@ -153,11 +165,8 @@ const TSPResult = () => {
         setPathDistance(null);
       } else {
         setResultPath(tspData.tsp_path);
-        setPathDistance(calculatePathDistance(tspData.tsp_path, adjacencyList));
+        setPathDistance(calculatePathDistance(tspData.tsp_path, edgeMap));
       }
-
-      // Convert adjacency list to nodes and edges for vis-network
-      const { nodes, edges, edgeMap } = convertAdjacencyListToGraph(adjacencyList);
       
       // Set graph data for visualization
       setGraphData({
@@ -173,65 +182,60 @@ const TSPResult = () => {
     }
   };
 
-  // Convert adjacency list format to vis-network compatible format
-  const convertAdjacencyListToGraph = (adjacencyList) => {
-    const nodes = [];
-    const edges = [];
-    const edgeMap = {}; // Map to store edge data for easy lookup
-    
-    // Create nodes
-    Object.keys(adjacencyList).forEach(node => {
-      nodes.push({
-        id: node,
-        label: `${node}`
+  const convertNodeEdgeListToGraph = (nodes, edges) => {
+    const nodeData = nodes.map((node, idx) => ({
+      id: node.label ?? idx,
+      label: node.label ?? `${idx}`
+    }));
+  
+    const edgeData = [];
+    const edgeMap = {};
+  
+    edges.forEach((edge) => {
+      const edgeId = `${edge.from}-${edge.to}`;
+      const weight = edge.weight ?? 1;
+  
+      edgeData.push({
+        id: edgeId,
+        from: edge.from,
+        to: edge.to,
+        label: weight.toString(),
+        weight,
+        title: `Weight: ${weight}`
       });
+  
+      edgeMap[edgeId] = {
+        from: edge.from,
+        to: edge.to,
+        weight
+      };
     });
-
-    // Create edges
-    Object.entries(adjacencyList).forEach(([from, connections]) => {
-      Object.entries(connections).forEach(([to, data]) => {
-        const edgeId = `${from}-${to}`;
-        
-        // Store edge data in the map
-        edgeMap[edgeId] = {
-          from,
-          to,
-          weight: data.weight
-        };
-        
-        // Add edge to the collection
-        edges.push({
-          id: edgeId,
-          from,
-          to,
-          label: data.weight.toString(),
-          weight: data.weight,
-          title: `Weight: ${data.weight}`
-        });
-      });
-    });
-
-    return { nodes, edges, edgeMap };
+  
+    return {
+      nodes: nodeData,
+      edges: edgeData,
+      edgeMap
+    };
   };
+  
 
   // Calculate total distance of the path
-  const calculatePathDistance = (path, adjacencyList) => {
-    let totalDistance = 0;
-    
+  const calculatePathDistance = (path, edgeMap) => {
+    let total = 0;
+  
     for (let i = 0; i < path.length - 1; i++) {
       const from = path[i];
       const to = path[i + 1];
-      
-      if (adjacencyList[from] && adjacencyList[from][to]) {
-        totalDistance += adjacencyList[from][to].weight;
-      } else if (adjacencyList[to] && adjacencyList[to][from]) {
-        // Check the reverse direction if the graph is not fully bidirectional
-        totalDistance += adjacencyList[to][from].weight;
+  
+      const edge = edgeMap[`${from}-${to}`] || edgeMap[`${to}-${from}`];
+      if (edge) {
+        total += edge.weight;
       }
     }
-    
-    return totalDistance;
+  
+    return total;
   };
+  
 
   return (
     <div className="flex flex-col gap-4 p-4">

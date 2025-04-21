@@ -20,12 +20,16 @@ export const sendGraphToBackend = (nodes, edges) => {
   console.log("Sending graph data to backend:", graphData);
     
   return new Promise((resolve, reject) => {
-    fetch('http://127.0.0.1:5000/api/graph', {
+    fetch('http://127.0.0.1:5000/api/graphs', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
-      body: JSON.stringify(graphData),
+      body: JSON.stringify({
+        name: "Graph from React", // TODO: Replace with user provided name
+        data: graphData
+      }),
     })
     .then(response => {
       if (!response.ok) {
@@ -35,12 +39,11 @@ export const sendGraphToBackend = (nodes, edges) => {
     })
     .then(data => {
       console.log('Success:', data);
-      // No alert here, we'll handle UI feedback in the component
-      resolve(data); // Return the data to the calling function
+      resolve(data);
     })
     .catch((error) => {
       console.error('Error:', error);
-      reject(error); // Return the error to the calling function
+      reject(error);
     });
   });
 };
