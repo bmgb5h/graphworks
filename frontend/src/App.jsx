@@ -4,11 +4,11 @@ import { useEffect, useState } from "react";
 import GraphBuilder from "./components/GraphBuilder/index.jsx";
 import TSPResult from "./components/TSPResult/index.jsx";
 import Login from "./components/Login/index.jsx";
+import Register from "./components/Register/index.jsx";
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // Check for token in localStorage
   useEffect(() => {
     const token = localStorage.getItem("token");
     setIsLoggedIn(!!token);
@@ -46,15 +46,18 @@ const App = () => {
 
         <div className="max-w-7xl mx-auto my-4 px-4">
           <Routes>
-            {/* Login route */}
             <Route
               path="/"
               element={
-                isLoggedIn ? <Navigate to="/builder" /> : <Login setIsLoggedIn={setIsLoggedIn} />
+                isLoggedIn ? (
+                  <Navigate to="/builder" />
+                ) : (
+                  <Login setIsLoggedIn={setIsLoggedIn} />
+                )
               }
             />
+            <Route path="/register" element={<Register />} />
 
-            {/* Protected routes */}
             <Route
               path="/builder"
               element={isLoggedIn ? <GraphBuilder /> : <Navigate to="/" />}
@@ -64,7 +67,6 @@ const App = () => {
               element={isLoggedIn ? <TSPResult /> : <Navigate to="/" />}
             />
 
-            {/* Catch-all: redirect to login */}
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </div>
