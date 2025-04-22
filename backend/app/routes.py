@@ -126,7 +126,9 @@ def get_user_graph(graph_id):
             "id": graph.id,
             "name": graph.name,
             "user_id": graph.user_id,
-            "data": graph.data
+            "graph": graph.data,
+            "created_at": graph.created_at,
+            "updated_at": graph.updated_at
         }
         return jsonify(graph_data), 200
     except Exception as e:

@@ -5,6 +5,7 @@ import GraphBuilder from "./components/GraphBuilder/index.jsx";
 import TSPResult from "./components/TSPResult/index.jsx";
 import Login from "./components/Login/index.jsx";
 import Register from "./components/Register/index.jsx";
+import MyGraphs from "./components/MyGraphs/index.jsx";
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -32,6 +33,9 @@ const App = () => {
                 </Link>
                 <Link to="/tsp" className="hover:underline py-1 px-2 rounded hover:bg-blue-700">
                   TSP Solver
+                </Link>
+                <Link to="/my-graphs" className="hover:underline py-1 px-2 rounded hover:bg-blue-700">
+                  My Graphs
                 </Link>
                 <button
                   onClick={handleLogout}
@@ -65,6 +69,10 @@ const App = () => {
             <Route
               path="/tsp"
               element={isLoggedIn ? <TSPResult /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/my-graphs"
+              element={isLoggedIn ? <MyGraphs /> : <Navigate to="/" />}
             />
 
             <Route path="*" element={<Navigate to="/" />} />
