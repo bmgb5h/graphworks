@@ -6,6 +6,7 @@ import TSPResult from "./components/TSPResult/index.jsx";
 import Login from "./components/Login/index.jsx";
 import Register from "./components/Register/index.jsx";
 import MyGraphs from "./components/MyGraphs/index.jsx";
+import GraphViewer from "./components/GraphViewer/index.jsx";
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -61,20 +62,13 @@ const App = () => {
               }
             />
             <Route path="/register" element={<Register />} />
-
+            <Route path="/builder" element={isLoggedIn ? <GraphBuilder /> : <Navigate to="/" />} />
+            <Route path="/tsp" element={isLoggedIn ? <TSPResult /> : <Navigate to="/" />} />
+            <Route path="/my-graphs" element={isLoggedIn ? <MyGraphs /> : <Navigate to="/" />} />
             <Route
-              path="/builder"
-              element={isLoggedIn ? <GraphBuilder /> : <Navigate to="/" />}
+              path="/graphs/:graphId"
+              element={isLoggedIn ? <GraphViewer /> : <Navigate to="/" />}
             />
-            <Route
-              path="/tsp"
-              element={isLoggedIn ? <TSPResult /> : <Navigate to="/" />}
-            />
-            <Route
-              path="/my-graphs"
-              element={isLoggedIn ? <MyGraphs /> : <Navigate to="/" />}
-            />
-
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
         </div>

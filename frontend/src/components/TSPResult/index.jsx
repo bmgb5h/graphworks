@@ -133,8 +133,8 @@ const TSPResult = () => {
         throw new Error(graphResponseData.error);
       }
 
-      const nodeList = graphResponseData.data.nodes;
-      const edgeList = graphResponseData.data.edges;
+      const nodeList = graphResponseData.graph.nodes;
+      const edgeList = graphResponseData.graph.edges;
       
       // Then, fetch the TSP solution
       const tspResponse = await fetch(`http://127.0.0.1:5000/api/graphs/${parseInt(graphId.trim())}/tsp`, {

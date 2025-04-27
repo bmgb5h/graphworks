@@ -8,7 +8,7 @@ class Graph(BaseModel):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     data = db.Column(db.JSON, nullable=False)
 
-    tspruns = db.relationship('TSPRun', backref='graph', lazy='dynamic')
+    tspruns = db.relationship('TSPRun', backref='graph', lazy='dynamic', cascade='all, delete-orphan')
 
     def __repr__(self):
         return f'<Graph {self.name}>'

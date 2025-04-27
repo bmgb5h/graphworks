@@ -218,7 +218,8 @@ def get_graph_tsp_runs(graph_id):
             "algorithm": run.algorithm,
             "path": run.path,
             "cost": run.cost,
-            "time_to_calculate": run.time_to_calculate
+            "time_to_calculate": run.time_to_calculate,
+            "created_at": run.created_at
         } for run in tsp_runs]
         return jsonify(runs_data), 200
     except Exception as e:
@@ -270,7 +271,8 @@ def get_graph_tsp_run(graph_id, run_id):
             "algorithm": tsp_run.algorithm,
             "path": tsp_run.path,
             "cost": tsp_run.cost,
-            "time_to_calculate": tsp_run.time_to_calculate
+            "time_to_calculate": tsp_run.time_to_calculate,
+            "created_at": tsp_run.created_at
         }
         return jsonify(run_data), 200
     except Exception as e:
