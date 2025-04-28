@@ -183,7 +183,10 @@ def delete_user_graph(graph_id):
 
     try:
         db.session.delete(graph)
+        # Delete all associated TSP runs
+        TSPRun.query.filter_by(graph_id=graph_id).delete()
         db.session.commit()
+
         return jsonify({"message": "Graph deleted successfully"}), 200
     except Exception as e:
         db.session.rollback()

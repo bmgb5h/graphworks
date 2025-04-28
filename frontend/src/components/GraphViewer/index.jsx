@@ -10,7 +10,7 @@ const GraphViewer = () => {
   const [tspResults, setTspResults] = useState([]);
   const [selectedRun, setSelectedRun] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [algorithm, setAlgorithm] = useState("asadpour");
+  const [algorithm, setAlgorithm] = useState("simulated_annealing");
   const [runningTsp, setRunningTsp] = useState(false);
   const networkContainerRef = useRef(null);
   const networkRef = useRef(null);
@@ -238,10 +238,10 @@ const GraphViewer = () => {
               value={algorithm}
               onChange={(e) => setAlgorithm(e.target.value)}
             >
-              <option value="asadpour">Asadpour (default)</option>
-              <option value="greedy">Greedy</option>
               <option value="simulated_annealing">Simulated Annealing</option>
               <option value="threshold_accepting">Threshold Accepting</option>
+              <option value="greedy">Greedy (Only for complete graphs)</option>
+              <option value="asadpour">Asadpour (Very slow, but more accurate)</option>
             </select>
             <button
               onClick={handleRunTsp}
