@@ -2,6 +2,8 @@ import { useParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { Network } from "vis-network";
 
+// TODO: GraphBuilder, GraphViewer, and GraphEditor need to be refactored
+
 const GraphViewer = () => {
   const { graphId } = useParams();
   const [graph, setGraph] = useState(null);

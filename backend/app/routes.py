@@ -10,6 +10,7 @@ import app.utils as utils
 
 api_bp = Blueprint('api', __name__)
 
+# TODO: Organize routes into separate files for
 
 @api_bp.route('/api/register', methods=['POST'])
 def register():

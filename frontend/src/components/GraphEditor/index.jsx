@@ -7,11 +7,12 @@ import "vis-network/dist/dist/vis-network.css";
 import { networkOptions } from "../GraphBuilder/networkConfig";
 import SelectedItemInfo from "../GraphBuilder/components/SelectedItemInfo";
 
+// TODO: GraphBuilder, GraphViewer, and GraphEditor need to be refactored
+
 const GraphEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
 
-  // State management
   const [networkNodes] = useState(new DataSet([]));
   const [networkEdges] = useState(new DataSet([]));
   const [selectedItem, setSelectedItem] = useState(null);
@@ -20,7 +21,6 @@ const GraphEditor = () => {
   const [history, setHistory] = useState([]);
   const [newNodeName, setNewNodeName] = useState("");
 
-  // Refs
   const networkContainer = useRef(null);
   const networkInstance = useRef(null);
 

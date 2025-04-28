@@ -12,8 +12,9 @@ import GraphControls from "./components/GraphControls";
 import FileImport from "./components/FileImport";
 import GraphSubmit from "./components/GraphSubmit";
 
+// TODO: GraphBuilder, GraphViewer, and GraphEditor need to be refactored
+
 const GraphBuilder = () => {
-  // State management
   const [newNodeName, setNewNodeName] = useState("");
   const [networkNodes] = useState(new DataSet([]));
   const [networkEdges] = useState(new DataSet([]));
@@ -22,7 +23,6 @@ const GraphBuilder = () => {
   const [graphTitle, setGraphTitle] = useState("");
   const [history, setHistory] = useState([]);
   
-  // Refs
   const networkContainer = useRef(null);
   const networkInstance = useRef(null);
 
@@ -31,11 +31,12 @@ const GraphBuilder = () => {
     if (!networkContainer.current) return;
 
     try {
-      // Create customized network options with the addEdge handler
+      // Custom network options
       const options = {
         ...networkOptions,
         manipulation: {
           ...networkOptions.manipulation,
+          // Custom function to handle adding edges
           addEdge: (edgeData, callback) => handleAddEdge(edgeData, callback, networkEdges)
         }
       };
@@ -100,6 +101,7 @@ const GraphBuilder = () => {
 
     setNewNodeName("");
   };
+
   const handleAddEdge = (edgeData, callback) => {
     const { from, to } = edgeData;
 
@@ -173,11 +175,14 @@ const GraphBuilder = () => {
       }
     }
   };
+
   // Enter edge creation mode
   const connectNodes = () => {
     if (!networkInstance.current) return;
     networkInstance.current.addEdgeMode();
   };
+
+  // Undo the last action
   const undo = () => {
     if (history.length === 0) {
       alert("No actions to undo!");
@@ -209,6 +214,7 @@ const GraphBuilder = () => {
         console.warn("Unknown action:", lastAction);
     }
   };
+
   const clearGraph = () => {
     // Confirm with user before clearing
     if (!window.confirm("Are you sure you want to clear the entire graph?")) {
@@ -240,6 +246,7 @@ const GraphBuilder = () => {
       alert("Failed to clear graph");
     }
   };
+  
   // Import graph data from a CSV file
   const handleFileUpload = (event) => {
     const file = event.target.files[0];
