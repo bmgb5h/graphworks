@@ -1,37 +1,72 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { Network } from "vis-network";
 import { DataSet } from "vis-data";
 import "vis-network/dist/dist/vis-network.css";
 
-import { networkOptions } from "./networkConfig";
-import { processCSVData } from "./csvUtils";
-import { sendGraphToBackend } from "./apiUtils";
-import InstructionsPanel from "./components/InstructionsPanel";
-import SelectedItemInfo from "./components/SelectedItemInfo";
-import GraphControls from "./components/GraphControls";
-import FileImport from "./components/FileImport";
-import GraphSubmit from "./components/GraphSubmit";
+import { networkOptions } from "../GraphBuilder/networkConfig";
+import SelectedItemInfo from "../GraphBuilder/components/SelectedItemInfo";
 
-const GraphBuilder = () => {
+const GraphEditor = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
   // State management
-  const [newNodeName, setNewNodeName] = useState("");
   const [networkNodes] = useState(new DataSet([]));
   const [networkEdges] = useState(new DataSet([]));
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedItemType, setSelectedItemType] = useState(null);
   const [graphTitle, setGraphTitle] = useState("");
   const [history, setHistory] = useState([]);
-  
+  const [newNodeName, setNewNodeName] = useState("");
+
   // Refs
   const networkContainer = useRef(null);
   const networkInstance = useRef(null);
+
+  // Fetch graph data on component mount
+  useEffect(() => {
+    const fetchGraph = async () => {
+      const token = localStorage.getItem("token");
+      try {
+        const res = await fetch(`http://127.0.0.1:5000/api/graphs/${id}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+        const data = await res.json();
+        setGraphTitle(data.name);
+
+        networkNodes.clear();
+        networkEdges.clear();
+
+        // Add nodes with proper id field
+        networkNodes.add(data.graph.nodes.map(node => ({
+          id: node.label,  // Set id equal to label for nodes
+          label: node.label
+        })));
+
+        // Add edges with proper id and label fields
+        networkEdges.add(data.graph.edges.map(edge => ({
+          id: `${edge.from}-${edge.to}`,
+          from: edge.from,
+          to: edge.to,
+          label: String(edge.weight)  // Use weight as label for visualization
+        })));
+      } catch (error) {
+        console.error("Failed to load graph:", error);
+        alert("Failed to load graph.");
+      }
+    };
+
+    fetchGraph();
+  }, [id, networkNodes, networkEdges]);
 
   // Initialize the network visualization
   useEffect(() => {
     if (!networkContainer.current) return;
 
     try {
-      // Create customized network options with the addEdge handler
       const options = {
         ...networkOptions,
         manipulation: {
@@ -40,14 +75,12 @@ const GraphBuilder = () => {
         }
       };
 
-      // Create network with the datasets
       networkInstance.current = new Network(
         networkContainer.current,
         { nodes: networkNodes, edges: networkEdges },
         options
       );
 
-      // Set up event listeners
       networkInstance.current.on("click", params => {
         if (params.nodes.length > 0) {
           setSelectedItem(params.nodes[0]);
@@ -62,7 +95,6 @@ const GraphBuilder = () => {
         }
       });
 
-      // Cleanup function
       return () => {
         if (networkInstance.current) {
           networkInstance.current.destroy();
@@ -72,8 +104,6 @@ const GraphBuilder = () => {
       console.error("Error initializing network:", error);
     }
   }, [networkNodes, networkEdges]);
-
-
 
   // Add a new node to the graph
   const addNode = () => {
@@ -89,10 +119,8 @@ const GraphBuilder = () => {
 
     try {
       const newNode = { id: newNodeName, label: newNodeName };
-  
-      // Save action to history before adding the node
+
       setHistory((prev) => [...prev, { type: "addNode", data: newNode }]);
-  
       networkNodes.add(newNode);
     } catch (error) {
       console.error("Error adding node:", error);
@@ -100,10 +128,10 @@ const GraphBuilder = () => {
 
     setNewNodeName("");
   };
+
   const handleAddEdge = (edgeData, callback) => {
     const { from, to } = edgeData;
 
-    // Check for duplicate edges
     const existingEdges = networkEdges.get().filter(edge =>
       edge.from === from && edge.to === to
     );
@@ -114,7 +142,6 @@ const GraphBuilder = () => {
       return;
     }
 
-    // Prompt for edge weight
     const weight = prompt("Enter edge weight (non-negative number):", "1");
 
     if (weight !== null && !isNaN(Number(weight)) && Number(weight) >= 0) {
@@ -124,7 +151,6 @@ const GraphBuilder = () => {
         id: `${from}-${to}`
       };
 
-      // Store the complete edge data in history
       setHistory((prev) => [...prev, { 
         type: "addEdge", 
         data: completeEdgeData 
@@ -136,21 +162,17 @@ const GraphBuilder = () => {
     }
   };
 
-
-  // Delete the currently selected node or edge
   const deleteSelected = () => {
     if (selectedItem) {
       try {
         if (selectedItemType === "node") {
           const nodeData = networkNodes.get(selectedItem);
 
-          // Find and save all edges connected to this node
           const connectedEdges = networkEdges.get({
             filter: (edge) =>
               edge.from === selectedItem || edge.to === selectedItem
           });
 
-          // Save deletion to history before removing
           setHistory((prev) => [
             ...prev,
             { type: "deleteNode", data: { node: nodeData, edges: connectedEdges } }
@@ -161,7 +183,6 @@ const GraphBuilder = () => {
         } else if (selectedItemType === "edge") {
           const edgeData = networkEdges.get(selectedItem.id);
 
-          // Save deletion to history before removing
           setHistory((prev) => [...prev, { type: "deleteEdge", data: edgeData }]);
 
           networkEdges.remove(selectedItem.id);
@@ -173,11 +194,12 @@ const GraphBuilder = () => {
       }
     }
   };
-  // Enter edge creation mode
+
   const connectNodes = () => {
     if (!networkInstance.current) return;
     networkInstance.current.addEdgeMode();
   };
+
   const undo = () => {
     if (history.length === 0) {
       alert("No actions to undo!");
@@ -185,7 +207,7 @@ const GraphBuilder = () => {
     }
 
     const lastAction = history[history.length - 1];
-    setHistory((prev) => prev.slice(0, -1)); // Remove last action from history
+    setHistory((prev) => prev.slice(0, -1));
 
     switch (lastAction.type) {
       case "addNode":
@@ -209,14 +231,13 @@ const GraphBuilder = () => {
         console.warn("Unknown action:", lastAction);
     }
   };
+
   const clearGraph = () => {
-    // Confirm with user before clearing
     if (!window.confirm("Are you sure you want to clear the entire graph?")) {
       return;
     }
 
     try {
-      // Save current state to history before clearing
       const currentNodes = networkNodes.get();
       const currentEdges = networkEdges.get();
     
@@ -228,11 +249,9 @@ const GraphBuilder = () => {
         }
       }]);
 
-      // Clear all nodes and edges
       networkNodes.clear();
       networkEdges.clear();
     
-      // Reset selection
       setSelectedItem(null);
       setSelectedItemType(null);
     } catch (error) {
@@ -240,20 +259,7 @@ const GraphBuilder = () => {
       alert("Failed to clear graph");
     }
   };
-  // Import graph data from a CSV file
-  const handleFileUpload = (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
 
-    processCSVData(
-      file, 
-      networkNodes, 
-      networkEdges, 
-      networkInstance
-    );
-  };
-
-  // Handle keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (event) => {
       if ((event.key === "Delete" || event.key === "Backspace") && selectedItem) {
@@ -265,66 +271,126 @@ const GraphBuilder = () => {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [selectedItem]);
 
-  // Process the graph and send to backend
-  const processGraph = async () => {
-    if (networkNodes.length === 0) {
-      alert("Please create a graph first!");
-      return;
-    }
-
+  const saveGraph = async () => {
+    const token = localStorage.getItem("token");
     const nodes = networkNodes.get();
-    const edges = networkEdges.get();
-
+    const edges = networkEdges.get().map(e => ({
+      from: e.from,
+      to: e.to,
+      weight: Number(e.label),
+    }));
+  
     try {
-      const response = await sendGraphToBackend(nodes, edges, graphTitle);
-      
-      if (response.graph_id) {
-        alert('Graph saved successfully!');
-      }
+      await fetch(`http://127.0.0.1:5000/api/graphs/${id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          data: {
+            name: graphTitle,
+            nodes,
+            edges,
+          }
+        }),
+      });
+      alert("Graph saved successfully!");
+      navigate("/my-graphs");
+    } catch (error) {
+      console.error("Failed to save graph:", error);
+      alert("Failed to save graph.");
     }
-    catch (error) {
-      console.error("Error sending graph to backend:", error);
-      alert("Failed to save graph");
+  };
+  
+
+  const cancel = () => {
+    if (window.confirm("Discard changes and go back?")) {
+      navigate("/my-graphs");
     }
   };
 
   return (
     <div className="flex flex-col gap-4 p-4">
+      <div className="flex gap-2 items-center">
+        <input
+          type="text"
+          className="border px-2 py-1 rounded w-full"
+          placeholder="Graph title"
+          value={graphTitle}
+          onChange={e => setGraphTitle(e.target.value)}
+        />
+      </div>
 
-      <InstructionsPanel />
+      <div className="border p-6 rounded-lg bg-white shadow-md flex flex-wrap gap-4 items-center">
+        {/* Node Name Input */}
+        <input
+          type="text"
+          placeholder="Node Name"
+          value={newNodeName}
+          onChange={(e) => setNewNodeName(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && addNode()}
+          className="border p-3 rounded-md w-48 text-base flex-shrink-0"
+        />
 
-      <FileImport handleFileUpload={handleFileUpload} />
-      <GraphControls
-        newNodeName={newNodeName}
-        setNewNodeName={setNewNodeName}
-        addNode={addNode}
-        connectNodes={connectNodes}
-        deleteSelected={deleteSelected}
-        undo={undo}
-        clearGraph={clearGraph}
-        selectedItem={selectedItem}
-        history={history}
-      />
+        {/* Buttons */}
+        <button
+          onClick={addNode}
+          className="px-5 py-2 bg-blue-500 text-white text-base rounded-md hover:bg-blue-600 transition"
+        >
+          Add Node
+        </button>
+        <button
+          onClick={connectNodes}
+          className="px-5 py-2 bg-green-500 text-white text-base rounded-md hover:bg-green-600 transition"
+        >
+          Connect Nodes
+        </button>
+        <button
+          onClick={deleteSelected}
+          disabled={!selectedItem}
+          className={`px-5 py-2 text-base rounded-md transition ${
+            selectedItem 
+              ? "bg-red-500 text-white hover:bg-red-600"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          }`}
+        >
+          Delete
+        </button>
+        <button
+          onClick={undo}
+          disabled={history.length === 0}
+          className={`px-5 py-2 text-base rounded-md transition ${
+            history.length > 0
+              ? "bg-yellow-500 text-white hover:bg-yellow-600"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          }`}
+        >
+          Undo
+        </button>
+        <button
+          onClick={clearGraph}
+          className="px-5 py-2 bg-orange-500 text-white text-base rounded-md hover:bg-orange-600 transition"
+        >
+          Clear
+        </button>
+      </div>
 
-      <div
-        ref={networkContainer}
-        style={{ width: "100%", height: "75vh", border: "1px solid #ddd" }}
-        className="bg-white"
-      />
 
-      <SelectedItemInfo 
-        selectedItem={selectedItem}
-        selectedItemType={selectedItemType}
-      />
+      <div ref={networkContainer} style={{ width: "100%", height: "75vh", border: "1px solid #ddd" }} className="bg-white" />
 
-      <GraphSubmit
-        graphTitle={graphTitle}
-        setGraphTitle={setGraphTitle}
-        processGraph={processGraph}
-      />
+      <SelectedItemInfo selectedItem={selectedItem} selectedItemType={selectedItemType} />
 
+      <div className="flex gap-2 justify-end mt-4">
+        <button onClick={cancel} className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">
+          Cancel
+        </button>
+        <button onClick={saveGraph} className="bg-blue-700 text-white px-4 py-2 rounded hover:bg-blue-800">
+          Save
+        </button>
+      </div>
     </div>
   );
 };
 
-export default GraphBuilder;
+export default GraphEditor;

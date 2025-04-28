@@ -173,17 +173,14 @@ const GraphViewer = () => {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
-
+  
       if (res.ok) {
-        const newResult = {
-          id: Date.now(), // fake id for now
-          algorithm: algorithm,
-          path: data.tsp_path,
-          cost: data.cost,
-          time_to_calculate: data.time_to_calculate,
-          created_at: new Date().toISOString(),
-        };
-        setTspResults((prev) => [newResult, ...prev]);
+        // After running TSP, fetch updated TSP results with real IDs
+        const tspRes = await fetch(`http://127.0.0.1:5000/api/graphs/${graphId}/tsp/runs`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const tspData = await tspRes.json();
+        setTspResults(tspData);
       } else {
         alert(data.error || "Failed to run TSP.");
       }
@@ -193,6 +190,28 @@ const GraphViewer = () => {
       setRunningTsp(false);
     }
   };
+
+  const handleDeleteTspRun = async (id) => {
+    const token = localStorage.getItem("token");
+    if (!window.confirm("Are you sure you want to delete this TSP run?")) return;
+    try {
+      const res = await fetch(`http://127.0.0.1:5000/api/graphs/${graphId}/tsp/runs/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setTspResults((prev) => prev.filter((run) => run.id !== id));
+        if (selectedRun?.id === id) {
+          setSelectedRun(null);
+        }
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to delete TSP run.");
+      }
+    } catch (err) {
+      console.error("Error deleting TSP run:", err);
+    }
+  };  
 
   if (loading) return <p>Loading...</p>;
   if (!graph) return <p>Graph not found.</p>;
@@ -241,11 +260,20 @@ const GraphViewer = () => {
               {tspResults.map((result) => (
                 <li
                   key={result.id}
-                  className={`p-4 rounded shadow cursor-pointer ${
+                  className={`p-4 rounded shadow cursor-pointer relative ${
                     selectedRun?.id === result.id ? "bg-red-100" : "bg-white"
                   }`}
                   onClick={() => handleTspRunClick(result)}
                 >
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation(); // prevent selecting when clicking delete
+                      handleDeleteTspRun(result.id);
+                    }}
+                    className="absolute top-2 right-2 text-red-500 hover:text-red-700"
+                  >
+                    ✕
+                  </button>
                   <p><strong>Algorithm:</strong> {result.algorithm}</p>
                   <p><strong>Cost:</strong> {result.cost.toFixed(2)}</p>
                   <p><strong>Duration:</strong> {result.time_to_calculate.toFixed(2)}s</p>

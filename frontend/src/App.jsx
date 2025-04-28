@@ -2,11 +2,11 @@ import { BrowserRouter as Router, Route, Routes, Navigate, Link } from "react-ro
 import { useEffect, useState } from "react";
 
 import GraphBuilder from "./components/GraphBuilder/index.jsx";
-import TSPResult from "./components/TSPResult/index.jsx";
 import Login from "./components/Login/index.jsx";
 import Register from "./components/Register/index.jsx";
 import MyGraphs from "./components/MyGraphs/index.jsx";
 import GraphViewer from "./components/GraphViewer/index.jsx";
+import GraphEditor from "./components/GraphEditor/index.jsx";
 
 const App = () => {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -27,13 +27,10 @@ const App = () => {
         {isLoggedIn && (
           <nav className="bg-blue-600 text-white p-4 shadow-md">
             <div className="max-w-7xl mx-auto flex justify-between items-center">
-              <h1 className="text-2xl font-bold">Graph Solver</h1>
+              <h1 className="text-2xl font-bold">GraphWorks</h1>
               <div className="flex gap-4">
                 <Link to="/builder" className="hover:underline py-1 px-2 rounded hover:bg-blue-700">
                   Graph Builder
-                </Link>
-                <Link to="/tsp" className="hover:underline py-1 px-2 rounded hover:bg-blue-700">
-                  TSP Solver
                 </Link>
                 <Link to="/my-graphs" className="hover:underline py-1 px-2 rounded hover:bg-blue-700">
                   My Graphs
@@ -63,11 +60,14 @@ const App = () => {
             />
             <Route path="/register" element={<Register />} />
             <Route path="/builder" element={isLoggedIn ? <GraphBuilder /> : <Navigate to="/" />} />
-            <Route path="/tsp" element={isLoggedIn ? <TSPResult /> : <Navigate to="/" />} />
             <Route path="/my-graphs" element={isLoggedIn ? <MyGraphs /> : <Navigate to="/" />} />
             <Route
               path="/graphs/:graphId"
               element={isLoggedIn ? <GraphViewer /> : <Navigate to="/" />}
+            />
+            <Route
+              path='/graphs/:id/edit'
+              element={isLoggedIn ? <GraphEditor /> : <Navigate to="/" />}
             />
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>

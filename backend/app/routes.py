@@ -133,6 +133,41 @@ def get_user_graph(graph_id):
         return jsonify(graph_data), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+    
+
+@api_bp.route('/api/graphs/<int:graph_id>', methods=['PUT'])
+@jwt_required()
+def update_user_graph(graph_id):
+    """Update a specific graph for the logged-in user, and delete all associated TSP runs."""
+    user_id = get_jwt_identity()
+    graph = Graph.query.filter_by(user_id=user_id, id=graph_id).first()
+
+    if not graph:
+        return jsonify({"error": "Graph not found"}), 404
+
+    data = request.get_json()
+    if not data or "data" not in data:
+        return jsonify({"error": "Missing 'data' field"}), 400
+
+    try:
+        # Delete all associated TSP results before updating the graph
+        TSPRun.query.filter_by(graph_id=graph_id).delete()
+
+        # Update the name field if present in the request
+        if 'name' in data['data']:
+            graph.name = data['data']['name']
+        
+        # Update other graph data (nodes and edges)
+        graph.data = data['data']
+
+        # Update timestamp
+        graph.updated_at = db.func.now()
+
+        db.session.commit()
+        return jsonify({"message": "Graph and associated TSP runs updated successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 
 @api_bp.route('/api/graphs/<int:graph_id>', methods=['DELETE'])
@@ -223,6 +258,25 @@ def get_graph_tsp_runs(graph_id):
         } for run in tsp_runs]
         return jsonify(runs_data), 200
     except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+
+@api_bp.route('/api/graphs/<int:graph_id>/tsp/runs', methods=['DELETE'])
+@jwt_required()
+def delete_all_graph_tsp_runs(graph_id):
+    """Delete all TSP runs for a specific graph."""
+    user_id = get_jwt_identity()
+    graph = Graph.query.filter_by(user_id=user_id, id=graph_id).first()
+
+    if not graph:
+        return jsonify({"error": "Graph not found"}), 404
+
+    try:
+        TSPRun.query.filter_by(graph_id=graph.id).delete(synchronize_session=False)
+        db.session.commit()
+        return jsonify({"message": "All TSP runs deleted successfully"}), 200
+    except Exception as e:
+        db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
 

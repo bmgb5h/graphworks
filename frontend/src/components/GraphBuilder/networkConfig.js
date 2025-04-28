@@ -5,7 +5,16 @@ export const networkOptions = {
       size: 30,
       font: { size: 14, color: "#000000" },
       borderWidth: 2,
-      shadow: true
+      shadow: true,
+      scaling: {
+        min: 10,
+        max: 30,
+        label: {
+          min: 14,
+          max: 30,
+          drawThreshold: 5
+        }
+      },
     },
     edges: {
       width: 2,

@@ -4,7 +4,7 @@
  * @param {Array} edges - The edges to send
  * @returns {Promise} - Promise that resolves with the response data including graph_id
  */
-export const sendGraphToBackend = (nodes, edges) => {
+export const sendGraphToBackend = (nodes, edges, graphTitle) => {
   // Prepare data for backend
   const graphData = {
     nodes: nodes.map(node => ({
@@ -27,7 +27,7 @@ export const sendGraphToBackend = (nodes, edges) => {
         'Authorization': `Bearer ${localStorage.getItem('token')}`
       },
       body: JSON.stringify({
-        name: "Graph from React", // TODO: Replace with user provided name
+        name: graphTitle,
         data: graphData
       }),
     })
