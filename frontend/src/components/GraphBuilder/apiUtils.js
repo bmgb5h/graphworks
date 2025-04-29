@@ -20,7 +20,7 @@ export const sendGraphToBackend = (nodes, edges, graphTitle) => {
   console.log("Sending graph data to backend:", graphData);
     
   return new Promise((resolve, reject) => {
-    fetch('http://127.0.0.1:5000/api/graphs', {
+    fetch('/api/graphs', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

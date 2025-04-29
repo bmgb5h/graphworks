@@ -29,7 +29,7 @@ const GraphEditor = () => {
     const fetchGraph = async () => {
       const token = localStorage.getItem("token");
       try {
-        const res = await fetch(`http://127.0.0.1:5000/api/graphs/${id}`, {
+        const res = await fetch(`/api/graphs/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -281,7 +281,7 @@ const GraphEditor = () => {
     }));
   
     try {
-      await fetch(`http://127.0.0.1:5000/api/graphs/${id}`, {
+      await fetch(`/api/graphs/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
