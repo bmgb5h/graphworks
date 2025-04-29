@@ -35,7 +35,7 @@ const Login = ({ setIsLoggedIn }) => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <div className="bg-white p-8 rounded-2xl shadow-md w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center mb-6 text-blue-600">Login to Graph Solver</h2>
+        <h2 className="text-2xl font-bold text-center mb-6 text-blue-600">Login to GraphWorks</h2>
 
         {successMessage && (
           <p className="text-green-600 text-sm mb-4 text-center bg-green-100 p-2 rounded">
