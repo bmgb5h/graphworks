@@ -17,13 +17,12 @@ def find_shortest_path(graph, source, target, algorithm='dijkstra'):
 def traveling_salesman_path(graph, method='greedy'):
    
     c_graph = complete_graph(graph)
-    #DON'T use greedy when the graph was orgnially in-complete
     if method == 'greedy':
         tsp_path = nx.approximation.greedy_tsp(c_graph, weight="weight")
     elif method == 'simulated_annealing':
         tsp_path = nx.approximation.simulated_annealing_tsp(c_graph, init_cycle="greedy",  weight="weight", max_iterations=500)
     elif method == 'threshold_accepting':
-        tsp_path = nx.approximation.threshold_accepting_tsp(c_graph, init_cycle="greedy",weight="weight",max_iterations=500)
+        tsp_path = nx.approximation.threshold_accepting_tsp(c_graph, init_cycle="greedy",weight="weight", max_iterations=500)
     elif method == 'asadpour':
         tsp_path = nx.approximation.traveling_salesman_problem(c_graph, weight='weight', cycle=True)
     else:

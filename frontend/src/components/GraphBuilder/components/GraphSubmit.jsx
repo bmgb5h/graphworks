@@ -1,7 +1,7 @@
 const GraphSubmit = ({ graphTitle, setGraphTitle, processGraph }) => {
   return (
     <div className="border p-4 rounded bg-white shadow-sm flex flex-col gap-2 mt-4">
-      <span className="font-semibold">Name Your Graph</span>
+      <span className="font-semibold text-xl">Give Your Graph a Name</span>
       <input
         type="text"
         placeholder="Graph Title"

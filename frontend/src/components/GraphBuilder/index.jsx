@@ -6,7 +6,6 @@ import "vis-network/dist/dist/vis-network.css";
 import { networkOptions } from "./networkConfig";
 import { processCSVData } from "./csvUtils";
 import { sendGraphToBackend } from "./apiUtils";
-import InstructionsPanel from "./components/InstructionsPanel";
 import SelectedItemInfo from "./components/SelectedItemInfo";
 import GraphControls from "./components/GraphControls";
 import FileImport from "./components/FileImport";
@@ -22,6 +21,7 @@ const GraphBuilder = () => {
   const [selectedItemType, setSelectedItemType] = useState(null);
   const [graphTitle, setGraphTitle] = useState("");
   const [history, setHistory] = useState([]);
+  const [isConnectModeActive, setIsConnectModeActive] = useState(false);
   
   const networkContainer = useRef(null);
   const networkInstance = useRef(null);
@@ -37,7 +37,9 @@ const GraphBuilder = () => {
         manipulation: {
           ...networkOptions.manipulation,
           // Custom function to handle adding edges
-          addEdge: (edgeData, callback) => handleAddEdge(edgeData, callback, networkEdges)
+          addEdge: (edgeData, callback) => {
+            handleAddEdge(edgeData, callback, networkEdges);
+          }
         }
       };
 
@@ -105,6 +107,12 @@ const GraphBuilder = () => {
   const handleAddEdge = (edgeData, callback) => {
     const { from, to } = edgeData;
 
+    if (from === to) {
+      alert("Cannot connect a node to itself!");
+      callback(null);
+      return;
+    }
+
     // Check for duplicate edges
     const existingEdges = networkEdges.get().filter(edge =>
       edge.from === from && edge.to === to
@@ -133,9 +141,18 @@ const GraphBuilder = () => {
       }]);
 
       callback(completeEdgeData);
+      
+      if (isConnectModeActive && networkInstance.current) {
+        setTimeout(() => {
+          networkInstance.current.addEdgeMode();
+        }, 0);
+      }
     } else {
       callback(null);
     }
+
+    // Keep connect mode active
+    networkInstance.current.addEdgeMode();
   };
 
 
@@ -176,10 +193,26 @@ const GraphBuilder = () => {
     }
   };
 
-  // Enter edge creation mode
+  // Toggle edge creation mode
   const connectNodes = () => {
     if (!networkInstance.current) return;
-    networkInstance.current.addEdgeMode();
+    
+    // Update isConnectModeActive state
+    setIsConnectModeActive(prevState => {
+      const newState = !prevState;
+      
+      // Apply the appropriate network mode based on the new state
+      if (newState) {
+        networkInstance.current.unselectAll();
+        // Turn on connect mode
+        networkInstance.current.addEdgeMode();
+      } else {
+        // Turn off connect mode
+        networkInstance.current.disableEditMode();
+      }
+      
+      return newState;
+    });
   };
 
   // Undo the last action
@@ -215,7 +248,24 @@ const GraphBuilder = () => {
     }
   };
 
+  const fitGraph = () => {
+    if (networkInstance.current) {
+      networkInstance.current.fit({
+        animation: {
+          duration: 500,
+          easingFunction: "easeInOutQuad"
+        }
+      });
+    }
+  };
+  
+
   const clearGraph = () => {
+    if (networkNodes.length === 0) {
+      alert("No graph to clear!");
+      return;
+    }
+
     // Confirm with user before clearing
     if (!window.confirm("Are you sure you want to clear the entire graph?")) {
       return;
@@ -260,17 +310,23 @@ const GraphBuilder = () => {
     );
   };
 
-  // Handle keyboard shortcuts
+  // Handle keyboard shortcuts and connect mode changes
   useEffect(() => {
     const handleKeyDown = (event) => {
       if ((event.key === "Delete" || event.key === "Backspace") && selectedItem) {
         deleteSelected();
       }
+      
+      // Allow escaping from connect mode with Escape key
+      if (event.key === "Escape" && isConnectModeActive) {
+        networkInstance.current.disableEditMode();
+        setIsConnectModeActive(false);
+      }
     };
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [selectedItem]);
+  }, [selectedItem, isConnectModeActive]);
 
   // Process the graph and send to backend
   const processGraph = async () => {
@@ -298,31 +354,44 @@ const GraphBuilder = () => {
   return (
     <div className="flex flex-col gap-4 p-4">
 
-      <InstructionsPanel />
-
       <FileImport handleFileUpload={handleFileUpload} />
-      <GraphControls
-        newNodeName={newNodeName}
-        setNewNodeName={setNewNodeName}
-        addNode={addNode}
-        connectNodes={connectNodes}
-        deleteSelected={deleteSelected}
-        undo={undo}
-        clearGraph={clearGraph}
-        selectedItem={selectedItem}
-        history={history}
-      />
+      
+      {/* Main content area with side-by-side layout */}
+      <div className="flex flex-row gap-4">
+        {/* Left side - Graph Controls */}
+        <div className="w-1/4">
+        <GraphControls
+          newNodeName={newNodeName}
+          setNewNodeName={setNewNodeName}
+          addNode={addNode}
+          connectNodes={connectNodes}
+          isConnectModeActive={isConnectModeActive}
+          deleteSelected={deleteSelected}
+          undo={undo}
+          clearGraph={clearGraph}
+          selectedItem={selectedItem}
+          history={history}
+          fitGraph={fitGraph}
+        />
 
-      <div
-        ref={networkContainer}
-        style={{ width: "100%", height: "75vh", border: "1px solid #ddd" }}
-        className="bg-white"
-      />
-
-      <SelectedItemInfo 
-        selectedItem={selectedItem}
-        selectedItemType={selectedItemType}
-      />
+          
+          <div className="mt-4">
+            <SelectedItemInfo 
+              selectedItem={selectedItem}
+              selectedItemType={selectedItemType}
+            />
+          </div>
+        </div>
+        
+        {/* Right side - Network Container */}
+        <div className="w-3/4">
+          <div
+            ref={networkContainer}
+            style={{ width: "100%", height: "75vh", border: "1px solid #ddd" }}
+            className="bg-white"
+          />
+        </div>
+      </div>
 
       <GraphSubmit
         graphTitle={graphTitle}

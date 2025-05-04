@@ -1,47 +1,49 @@
 // Network visualization configuration options
 export const networkOptions = {
-    nodes: {
-      shape: "circle",
-      size: 30,
-      font: { size: 14, color: "#000000" },
-      borderWidth: 2,
-      shadow: true,
-      scaling: {
-        min: 10,
-        max: 30,
-        label: {
-          min: 14,
-          max: 30,
-          drawThreshold: 5
-        }
-      },
+  layout: {
+    improvedLayout: true,
+    randomSeed: 1,
+    hierarchical: false,
+  },
+  physics: {
+    enabled: true,
+    solver: "forceAtlas2Based",
+    forceAtlas2Based: {
+      gravitationalConstant: -120,
+      centralGravity: 0.005,
+      springLength: 400,
+      springConstant: 0.02,
+      avoidOverlap: 1,
     },
-    edges: {
-      width: 2,
-      shadow: true,
-      font: { size: 14, align: "middle" },
-      arrows: {
-        to: { enabled: true, scaleFactor: 1.5, type: 'arrow' }
-      },
-      color: "#333",
-      smooth: { type: "curvedCW", roundness: 0.2 }
+    maxVelocity: 50,
+    stabilization: {
+      iterations: 200,
+      fit: true,
     },
-    physics: {
-      enabled: true,
-      barnesHut: {
-        gravitationalConstant: -3000,
-        centralGravity: 0.3,
-        springLength: 150,
-        springConstant: 0.04,
-        damping: 0.09
-      }
+  },
+  nodes: {
+    shape: "circle",
+    size: 30,
+    font: { size: 14, color: "#000000", align: "middle" },
+    borderWidth: 2,
+    shadow: true,
+  },
+  edges: {
+    width: 2,
+    shadow: true,
+    font: { size: 20, align: "middle" },
+    arrows: {
+      to: { enabled: true, scaleFactor: 1.5, type: "arrow" },
     },
-    manipulation: {
-      enabled: false,
-    },
-    interaction: {
-      hover: true,
-      multiselect: false,
-      dragNodes: true
-    }
-  };
+    color: "#333",
+    smooth: { type: "curvedCW", roundness: 0.2 },
+  },
+  manipulation: { 
+    enabled: false
+  },
+  interaction: {
+    hover: true,
+    multiselect: false,
+    dragNodes: true
+  },
+};
