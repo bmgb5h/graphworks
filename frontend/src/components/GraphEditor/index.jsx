@@ -27,7 +27,7 @@ const GraphControls = ({
 
   return (
     <div className="border p-6 rounded-lg bg-white shadow-md flex flex-col gap-6">
-      <span className="font-semibold text-xl">Build Your Own Graph</span>
+      <span className="font-semibold text-xl">Edit Your Graph</span>
       
 
       {/* Node Actions */}
