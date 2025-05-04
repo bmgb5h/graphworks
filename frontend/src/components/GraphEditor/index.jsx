@@ -9,6 +9,96 @@ import SelectedItemInfo from "../GraphBuilder/components/SelectedItemInfo";
 
 // TODO: GraphBuilder, GraphViewer, and GraphEditor need to be refactored
 
+const GraphControls = ({
+  newNodeName,
+  setNewNodeName,
+  addNode,
+  connectNodes,
+  isConnectModeActive,
+  deleteSelected,
+  undo,
+  clearGraph,
+  selectedItem,
+  history,
+  fitGraph }) => {
+  const handleKeyPress = (e) => {
+    if (e.key === "Enter") addNode();
+  };
+
+  return (
+    <div className="border p-6 rounded-lg bg-white shadow-md flex flex-col gap-6">
+      <span className="font-semibold text-xl">Build Your Own Graph</span>
+      
+
+      {/* Node Actions */}
+      <div className="grid grid-cols-1 gap-3 mb-4">
+        <input
+          type="text"
+          placeholder="Node Name"
+          value={newNodeName}
+          onChange={(e) => setNewNodeName(e.target.value)}
+          onKeyDown={handleKeyPress}
+          className="border p-3 rounded-md w-full text-base"
+        />
+        <button
+          onClick={addNode}
+          className="px-5 py-3 bg-blue-500 text-white text-base rounded-md hover:bg-blue-600 transition"
+        >
+          Add Node
+        </button>
+        <button
+          onClick={connectNodes}
+          className={`px-5 py-3 text-base rounded-md transition ${
+            isConnectModeActive
+              ? "bg-green-700 text-white hover:bg-green-800"
+              : "bg-green-500 text-white hover:bg-green-600"
+          }`}
+        >
+          {isConnectModeActive ? "Connecting (Click to Stop)" : "Connect Nodes"}
+        </button>
+        <button
+          onClick={deleteSelected}
+          disabled={!selectedItem}
+          className={`px-5 py-3 text-base rounded-md transition ${
+            selectedItem 
+              ? "bg-red-500 text-white hover:bg-red-600"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          }`}
+        >
+          Delete
+        </button>
+        <button
+          onClick={undo}
+          disabled={history.length === 0}
+          className={`px-5 py-3 text-base rounded-md transition ${
+            history.length > 0
+              ? "bg-yellow-500 text-white hover:bg-yellow-600"
+              : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          }`}
+        >
+          Undo
+        </button>
+      </div>
+
+      {/* Graph Management */}
+      <div className="grid grid-cols-1 gap-3">
+        <button
+          onClick={clearGraph}
+          className="px-5 py-3 bg-orange-500 text-white text-base rounded-md hover:bg-orange-600 transition"
+        >
+          Clear
+        </button>
+        <button
+          onClick={fitGraph}
+          className="px-5 py-3 bg-purple-500 text-white text-base rounded-md hover:bg-purple-600 transition"
+        >
+          Fit Graph
+        </button>
+      </div>
+    </div>
+  );
+};
+
 const GraphEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -20,6 +110,7 @@ const GraphEditor = () => {
   const [graphTitle, setGraphTitle] = useState("");
   const [history, setHistory] = useState([]);
   const [newNodeName, setNewNodeName] = useState("");
+  const [isConnectModeActive, setIsConnectModeActive] = useState(false);
 
   const networkContainer = useRef(null);
   const networkInstance = useRef(null);
@@ -132,6 +223,13 @@ const GraphEditor = () => {
   const handleAddEdge = (edgeData, callback) => {
     const { from, to } = edgeData;
 
+    if (from === to) {
+      alert("Cannot connect a node to itself!");
+      callback(null);
+      return;
+    }
+
+    // Check for duplicate edges
     const existingEdges = networkEdges.get().filter(edge =>
       edge.from === from && edge.to === to
     );
@@ -142,6 +240,7 @@ const GraphEditor = () => {
       return;
     }
 
+    // Prompt for edge weight
     const weight = prompt("Enter edge weight (non-negative number):", "1");
 
     if (weight !== null && !isNaN(Number(weight)) && Number(weight) >= 0) {
@@ -151,15 +250,25 @@ const GraphEditor = () => {
         id: `${from}-${to}`
       };
 
+      // Store the complete edge data in history
       setHistory((prev) => [...prev, { 
         type: "addEdge", 
         data: completeEdgeData 
       }]);
 
       callback(completeEdgeData);
+      
+      if (isConnectModeActive && networkInstance.current) {
+        setTimeout(() => {
+          networkInstance.current.addEdgeMode();
+        }, 0);
+      }
     } else {
       callback(null);
     }
+
+    // Keep connect mode active
+    networkInstance.current.addEdgeMode();
   };
 
   const deleteSelected = () => {
@@ -197,7 +306,23 @@ const GraphEditor = () => {
 
   const connectNodes = () => {
     if (!networkInstance.current) return;
-    networkInstance.current.addEdgeMode();
+    
+    // Update isConnectModeActive state
+    setIsConnectModeActive(prevState => {
+      const newState = !prevState;
+      
+      // Apply the appropriate network mode based on the new state
+      if (newState) {
+        networkInstance.current.unselectAll();
+        // Turn on connect mode
+        networkInstance.current.addEdgeMode();
+      } else {
+        // Turn off connect mode
+        networkInstance.current.disableEditMode();
+      }
+      
+      return newState;
+    });
   };
 
   const undo = () => {
@@ -229,6 +354,17 @@ const GraphEditor = () => {
         break;
       default:
         console.warn("Unknown action:", lastAction);
+    }
+  };
+
+  const fitGraph = () => {
+    if (networkInstance.current) {
+      networkInstance.current.fit({
+        animation: {
+          duration: 500,
+          easingFunction: "easeInOutQuad"
+        }
+      });
     }
   };
 
@@ -322,64 +458,42 @@ const GraphEditor = () => {
         />
       </div>
 
-      <div className="border p-6 rounded-lg bg-white shadow-md flex flex-wrap gap-4 items-center">
-        {/* Node Name Input */}
-        <input
-          type="text"
-          placeholder="Node Name"
-          value={newNodeName}
-          onChange={(e) => setNewNodeName(e.target.value)}
-          onKeyDown={(e) => e.key === "Enter" && addNode()}
-          className="border p-3 rounded-md w-48 text-base flex-shrink-0"
+      {/* Main content area with side-by-side layout */}
+      <div className="flex flex-row gap-4">
+        {/* Left side - Graph Controls */}
+        <div className="w-1/4">
+        <GraphControls
+          newNodeName={newNodeName}
+          setNewNodeName={setNewNodeName}
+          addNode={addNode}
+          connectNodes={connectNodes}
+          isConnectModeActive={isConnectModeActive}
+          deleteSelected={deleteSelected}
+          undo={undo}
+          clearGraph={clearGraph}
+          selectedItem={selectedItem}
+          history={history}
+          fitGraph={fitGraph}
         />
 
-        {/* Buttons */}
-        <button
-          onClick={addNode}
-          className="px-5 py-2 bg-blue-500 text-white text-base rounded-md hover:bg-blue-600 transition"
-        >
-          Add Node
-        </button>
-        <button
-          onClick={connectNodes}
-          className="px-5 py-2 bg-green-500 text-white text-base rounded-md hover:bg-green-600 transition"
-        >
-          Connect Nodes
-        </button>
-        <button
-          onClick={deleteSelected}
-          disabled={!selectedItem}
-          className={`px-5 py-2 text-base rounded-md transition ${
-            selectedItem 
-              ? "bg-red-500 text-white hover:bg-red-600"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
-          }`}
-        >
-          Delete
-        </button>
-        <button
-          onClick={undo}
-          disabled={history.length === 0}
-          className={`px-5 py-2 text-base rounded-md transition ${
-            history.length > 0
-              ? "bg-yellow-500 text-white hover:bg-yellow-600"
-              : "bg-gray-300 text-gray-500 cursor-not-allowed"
-          }`}
-        >
-          Undo
-        </button>
-        <button
-          onClick={clearGraph}
-          className="px-5 py-2 bg-orange-500 text-white text-base rounded-md hover:bg-orange-600 transition"
-        >
-          Clear
-        </button>
+          
+          <div className="mt-4">
+            <SelectedItemInfo 
+              selectedItem={selectedItem}
+              selectedItemType={selectedItemType}
+            />
+          </div>
+        </div>
+        
+        {/* Right side - Network Container */}
+        <div className="w-3/4">
+          <div
+            ref={networkContainer}
+            style={{ width: "100%", height: "75vh", border: "1px solid #ddd" }}
+            className="bg-white"
+          />
+        </div>
       </div>
-
-
-      <div ref={networkContainer} style={{ width: "100%", height: "75vh", border: "1px solid #ddd" }} className="bg-white" />
-
-      <SelectedItemInfo selectedItem={selectedItem} selectedItemType={selectedItemType} />
 
       <div className="flex gap-2 justify-end mt-4">
         <button onClick={cancel} className="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">

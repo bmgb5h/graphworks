@@ -6,7 +6,6 @@ import "vis-network/dist/dist/vis-network.css";
 import { networkOptions } from "./networkConfig";
 import { processCSVData } from "./csvUtils";
 import { sendGraphToBackend } from "./apiUtils";
-import InstructionsPanel from "./components/InstructionsPanel";
 import SelectedItemInfo from "./components/SelectedItemInfo";
 import GraphControls from "./components/GraphControls";
 import FileImport from "./components/FileImport";
@@ -249,6 +248,18 @@ const GraphBuilder = () => {
     }
   };
 
+  const fitGraph = () => {
+    if (networkInstance.current) {
+      networkInstance.current.fit({
+        animation: {
+          duration: 500,
+          easingFunction: "easeInOutQuad"
+        }
+      });
+    }
+  };
+  
+
   const clearGraph = () => {
     if (networkNodes.length === 0) {
       alert("No graph to clear!");
@@ -343,25 +354,26 @@ const GraphBuilder = () => {
   return (
     <div className="flex flex-col gap-4 p-4">
 
-      <InstructionsPanel />
       <FileImport handleFileUpload={handleFileUpload} />
       
       {/* Main content area with side-by-side layout */}
       <div className="flex flex-row gap-4">
         {/* Left side - Graph Controls */}
         <div className="w-1/4">
-          <GraphControls
-            newNodeName={newNodeName}
-            setNewNodeName={setNewNodeName}
-            addNode={addNode}
-            connectNodes={connectNodes}
-            isConnectModeActive={isConnectModeActive}
-            deleteSelected={deleteSelected}
-            undo={undo}
-            clearGraph={clearGraph}
-            selectedItem={selectedItem}
-            history={history}
-          />
+        <GraphControls
+          newNodeName={newNodeName}
+          setNewNodeName={setNewNodeName}
+          addNode={addNode}
+          connectNodes={connectNodes}
+          isConnectModeActive={isConnectModeActive}
+          deleteSelected={deleteSelected}
+          undo={undo}
+          clearGraph={clearGraph}
+          selectedItem={selectedItem}
+          history={history}
+          fitGraph={fitGraph}
+        />
+
           
           <div className="mt-4">
             <SelectedItemInfo 
