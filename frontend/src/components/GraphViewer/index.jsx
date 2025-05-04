@@ -109,54 +109,59 @@ const GraphViewer = () => {
     );
   }, [graph, loading]);
 
+  // Only update edge styles when selectedRun changes, not the entire network
   useEffect(() => {
     if (!graph || !networkRef.current) return;
 
-    const baseEdges = graph.graph.edges.map((edge) => ({
-      id: `${edge.from}-${edge.to}`,
-      from: edge.from,
-      to: edge.to,
-      label: edge.weight?.toString() ?? "",
-    }));
+    // Get the edges dataset from the network
+    const edgesDataset = networkRef.current.body.data.edges;
+    
+    // First, reset all edges to default style
+    graph.graph.edges.forEach(edge => {
+      const edgeId = `${edge.from}-${edge.to}`;
+      if (edgesDataset.get(edgeId)) {
+        edgesDataset.update({
+          id: edgeId,
+          color: "#333",
+          width: 2
+        });
+      }
+    });
 
+    // Then highlight the path edges if a run is selected
     if (selectedRun?.path) {
-      const highlightedEdges = [];
       for (let i = 0; i < selectedRun.path.length - 1; i++) {
         const from = selectedRun.path[i];
         const to = selectedRun.path[i + 1];
-
-        const matchingEdge = graph.graph.edges.find(
-          (e) => e.from === from && e.to === to
-        );
-
-        highlightedEdges.push({
-          id: `${from}-${to}`,
-          from: from,
-          to: to,
-          label: matchingEdge?.weight?.toString() ?? "",
-          arrows: { to: { enabled: true, scaleFactor: 1.5 } },
-          color: "#ff0000",
-          width: 4,
-          font: { size: 14, align: "middle", color: "#000000" },
-        });
-      }
-
-      for (const highlight of highlightedEdges) {
-        const idx = baseEdges.findIndex(
-          (e) => e.from === highlight.from && e.to === highlight.to
-        );
-        if (idx !== -1) {
-          baseEdges[idx] = highlight;
+        const edgeId = `${from}-${to}`;
+        
+        // Check if this edge exists in our dataset
+        if (edgesDataset.get(edgeId)) {
+          edgesDataset.update({
+            id: edgeId,
+            color: "#ff0000",
+            width: 4
+          });
         } else {
-          baseEdges.push(highlight);
+          // If edge doesn't exist in the current direction, it might be a directed graph
+          // We need to add this edge to visualize the complete path
+          const matchingEdge = graph.graph.edges.find(
+            (e) => e.from === from && e.to === to
+          );
+          
+          edgesDataset.add({
+            id: edgeId,
+            from: from,
+            to: to,
+            label: matchingEdge?.weight?.toString() ?? "",
+            arrows: { to: { enabled: true, scaleFactor: 1.5 } },
+            color: "#ff0000",
+            width: 4,
+            font: { size: 14, align: "middle", color: "#000000" },
+          });
         }
       }
     }
-
-    networkRef.current.setData({
-      nodes: networkRef.current.body.data.nodes.get(),
-      edges: baseEdges,
-    });
   }, [selectedRun, graph]);
 
   const handleTspRunClick = (result) => {
@@ -240,7 +245,7 @@ const GraphViewer = () => {
             >
               <option value="simulated_annealing">Simulated Annealing</option>
               <option value="threshold_accepting">Threshold Accepting</option>
-              <option value="greedy">Greedy (Only for complete graphs)</option>
+              <option value="greedy">Greedy</option>
               <option value="asadpour">Asadpour (Very slow, but more accurate)</option>
             </select>
             <button
@@ -259,7 +264,7 @@ const GraphViewer = () => {
             <p>No TSP results found for this graph.</p>
           ) : (
             <ul className="space-y-2">
-              {tspResults.map((result) => (
+              {[...tspResults].sort((a, b) => new Date(b.created_at) - new Date(a.created_at)).map((result) => (
                 <li
                   key={result.id}
                   className={`p-4 rounded shadow cursor-pointer relative ${
@@ -280,6 +285,7 @@ const GraphViewer = () => {
                   <p><strong>Cost:</strong> {result.cost.toFixed(2)}</p>
                   <p><strong>Duration:</strong> {result.time_to_calculate.toFixed(2)}s</p>
                   <p><strong>Created:</strong> {new Date(result.created_at).toLocaleDateString()}</p>
+                  <p><strong>Path Length:</strong> {result.path.length - 1}</p>
                   <p><strong>Path:</strong> {result.path.join(" → ")}</p>
                 </li>
               ))}

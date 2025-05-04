@@ -3,12 +3,12 @@ const GraphControls = ({
     setNewNodeName,
     addNode,
     connectNodes,
+    isConnectModeActive,
     deleteSelected,
     undo,
     clearGraph,
     selectedItem,
-    history
-  }) => {
+    history  }) => {
     const handleKeyPress = (e) => {
       if (e.key === "Enter") addNode();
     };
@@ -36,9 +36,13 @@ const GraphControls = ({
         </button>
         <button
           onClick={connectNodes}
-          className="px-5 py-2 bg-green-500 text-white text-base rounded-md hover:bg-green-600 transition"
+          className={`px-5 py-2 text-base rounded-md transition ${
+            isConnectModeActive
+              ? "bg-green-700 text-white hover:bg-green-800"
+              : "bg-green-500 text-white hover:bg-green-600"
+          }`}
         >
-          Connect Nodes
+          {isConnectModeActive ? "Connecting (Click to Stop)" : "Connect Nodes"}
         </button>
         <button
           onClick={deleteSelected}
