@@ -20,7 +20,7 @@ export const sendGraphToBackend = (nodes, edges, graphTitle) => {
   console.log("Sending graph data to backend:", graphData);
     
   return new Promise((resolve, reject) => {
-    fetch('/api/graphs', {
+    fetch('graphworks.railway.internal/api/graphs', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

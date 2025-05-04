@@ -68,13 +68,13 @@ const GraphViewer = () => {
     const fetchGraphData = async () => {
       const token = localStorage.getItem("token");
       try {
-        const res = await fetch(`/api/graphs/${graphId}`, {
+        const res = await fetch(`graphworks.railway.internal/api/graphs/${graphId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const data = await res.json();
         setGraph(data);
 
-        const tspRes = await fetch(`/api/graphs/${graphId}/tsp/runs`, {
+        const tspRes = await fetch(`graphworks.railway.internal/api/graphs/${graphId}/tsp/runs`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const tspData = await tspRes.json();
@@ -178,14 +178,14 @@ const GraphViewer = () => {
     const token = localStorage.getItem("token");
     setRunningTsp(true);
     try {
-      const res = await fetch(`/api/graphs/${graphId}/tsp?algo=${algorithm}`, {
+      const res = await fetch(`graphworks.railway.internal/api/graphs/${graphId}/tsp?algo=${algorithm}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
   
       if (res.ok) {
         // After running TSP, fetch updated TSP results with real IDs
-        const tspRes = await fetch(`/api/graphs/${graphId}/tsp/runs`, {
+        const tspRes = await fetch(`graphworks.railway.internal/api/graphs/${graphId}/tsp/runs`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         const tspData = await tspRes.json();
@@ -204,7 +204,7 @@ const GraphViewer = () => {
     const token = localStorage.getItem("token");
     if (!window.confirm("Are you sure you want to delete this TSP run?")) return;
     try {
-      const res = await fetch(`/api/graphs/${graphId}/tsp/runs/${id}`, {
+      const res = await fetch(`graphworks.railway.internal/api/graphs/${graphId}/tsp/runs/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       });

@@ -21,7 +21,7 @@ def create_app(test_config=None):
     jwt.init_app(app)
 
     # enable CORS for frontend requests
-    CORS(app)
+    CORS(app, resources={'*': {'origins': 'graphworks.vercel.app'}})
 
     # register blueprints
     app.register_blueprint(api_bp)

@@ -120,7 +120,7 @@ const GraphEditor = () => {
     const fetchGraph = async () => {
       const token = localStorage.getItem("token");
       try {
-        const res = await fetch(`/api/graphs/${id}`, {
+        const res = await fetch(`graphworks.railway.internal/api/graphs/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -417,7 +417,7 @@ const GraphEditor = () => {
     }));
   
     try {
-      await fetch(`/api/graphs/${id}`, {
+      await fetch(`graphworks.railway.internal/api/graphs/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",

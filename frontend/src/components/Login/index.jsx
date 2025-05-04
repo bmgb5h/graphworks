@@ -15,7 +15,7 @@ const Login = ({ setIsLoggedIn }) => {
     setSuccessMessage("");
 
     try {
-      const res = await fetch("/api/login", {
+      const res = await fetch("graphworks.railway.internal/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),

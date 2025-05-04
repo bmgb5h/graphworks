@@ -335,39 +335,3 @@ def get_graph_tsp_run(graph_id, run_id):
         return jsonify(run_data), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-
-############################
-#     DEBUGGING ROUTES     #
-############################
-
-@api_bp.route('/api/debug/users', methods=['GET'])
-def get_all_users():
-    """Get all users."""
-    users = User.query.with_entities(User.id).all()
-    user_ids = [user.id for user in users]
-    return jsonify({'user_ids': user_ids}), 200
- 
-
-@api_bp.route('/api/debug/graphs', methods=['GET'])
-def get_all_graphs():
-    """Get all graphs."""
-    graphs = Graph.query.with_entities(Graph.id).all()
-    graph_ids = [graph.id for graph in graphs]
-    return jsonify({'graph_ids': graph_ids}), 200
-
-
-@api_bp.route('/api/debug/users/<int:user_id>', methods=['DELETE'])
-def delete_any_user(user_id):
-    """Delete a user by ID."""
-    user = User.query.get(user_id)
-
-    if not user:
-        return jsonify({"error": "User not found"}), 404
-
-    try:
-        db.session.delete(user)
-        db.session.commit()
-        return jsonify({"message": "User deleted successfully"}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
