@@ -12,7 +12,7 @@ const Register = () => {
     setError("");
 
     try {
-      const res = await fetch("graphworks-production.up.railway.app/api/register", {
+      const res = await fetch("https://graphworks-production.up.railway.app/api/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
