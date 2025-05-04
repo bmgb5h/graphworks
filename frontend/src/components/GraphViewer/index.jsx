@@ -40,25 +40,27 @@ const GraphViewer = () => {
     nodes: {
       shape: "circle",
       size: 30,
-      font: { size: 14, color: "#000000" },
+      font: { size: 14, color: "#000000", align: "middle" },
       borderWidth: 2,
       shadow: true,
     },
     edges: {
       width: 2,
       shadow: true,
-      font: { size: 14, align: "middle" },
+      font: { size: 20, align: "middle" },
       arrows: {
         to: { enabled: true, scaleFactor: 1.5, type: "arrow" },
       },
       color: "#333",
       smooth: { type: "curvedCW", roundness: 0.2 },
     },
-    manipulation: { enabled: false },
+    manipulation: { 
+      enabled: false
+    },
     interaction: {
       hover: true,
       multiselect: false,
-      dragNodes: true,
+      dragNodes: true
     },
   };
 
