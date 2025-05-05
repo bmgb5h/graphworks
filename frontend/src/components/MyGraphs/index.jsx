@@ -9,7 +9,7 @@ const MyGraphs = () => {
   const fetchGraphs = async () => {
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch("https://graphworks.vercel.app/api/graphs", {
+      const res = await fetch("https://graphworks-production.up.railway.app/api/graphs", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -19,7 +19,7 @@ const MyGraphs = () => {
 
       const graphDetails = await Promise.all(
         graph_ids.map(async (id) => {
-          const detailRes = await fetch(`https://graphworks.vercel.app/api/graphs/${id}`, {
+          const detailRes = await fetch(`https://graphworks-production.up.railway.app/api/graphs/${id}`, {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -57,7 +57,7 @@ const MyGraphs = () => {
     const token = localStorage.getItem("token");
     if (!window.confirm("Are you sure you want to delete this graph?")) return;
     try {
-      await fetch(`https://graphworks.vercel.app/api/graphs/${id}`, {
+      await fetch(`https://graphworks-production.up.railway.app/api/graphs/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`,

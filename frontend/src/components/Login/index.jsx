@@ -15,7 +15,7 @@ const Login = ({ setIsLoggedIn }) => {
     setSuccessMessage("");
 
     try {
-      const res = await fetch("https://graphworks.vercel.app/api/login", {
+      const res = await fetch("https://graphworks-production.up.railway.app/api/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
