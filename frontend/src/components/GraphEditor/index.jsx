@@ -120,7 +120,7 @@ const GraphEditor = () => {
     const fetchGraph = async () => {
       const token = localStorage.getItem("token");
       try {
-        const res = await fetch(`https://graphworks-production.up.railway.app/api/graphs/${id}`, {
+        const res = await fetch(`https://graphworks.vercel.app/api/graphs/${id}`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -417,7 +417,7 @@ const GraphEditor = () => {
     }));
   
     try {
-      await fetch(`https://graphworks-production.up.railway.app/api/graphs/${id}`, {
+      await fetch(`https://graphworks.vercel.app/api/graphs/${id}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -448,49 +448,53 @@ const GraphEditor = () => {
 
   return (
     <div className="flex flex-col gap-4 p-4">
-      <div className="flex gap-2 items-center">
+      <div className="flex flex-col gap-1">
+        <label htmlFor="graphTitle" className="font-medium text-gray-700">Graph Title</label>
         <input
+          id="graphTitle"
           type="text"
-          className="border px-2 py-1 rounded w-full"
-          placeholder="Graph title"
+          className="border border-gray-300 px-4 py-3 rounded-md shadow-sm focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50 transition-all"
+          placeholder="Enter a descriptive title for your graph"
           value={graphTitle}
           onChange={e => setGraphTitle(e.target.value)}
         />
       </div>
 
       {/* Main content area with side-by-side layout */}
-      <div className="flex flex-row gap-4">
-        {/* Left side - Graph Controls */}
-        <div className="w-1/4">
-        <GraphControls
-          newNodeName={newNodeName}
-          setNewNodeName={setNewNodeName}
-          addNode={addNode}
-          connectNodes={connectNodes}
-          isConnectModeActive={isConnectModeActive}
-          deleteSelected={deleteSelected}
-          undo={undo}
-          clearGraph={clearGraph}
-          selectedItem={selectedItem}
-          history={history}
-          fitGraph={fitGraph}
-        />
-
-          
-          <div className="mt-4">
-            <SelectedItemInfo 
+      <div className="flex gap-3 h-[95vh]">
+        {/* Left side - Graph Controls + Selected Item Info */}
+        {/* Left side - Graph Controls + Selected Item Info */}
+        <div className="w-64 flex-shrink-0 h-full flex flex-col">
+          {/* GraphControls - No flex-grow */}
+          <div className="overflow-y-auto">
+            <GraphControls
+              newNodeName={newNodeName}
+              setNewNodeName={setNewNodeName}
+              addNode={addNode}
+              connectNodes={connectNodes}
+              isConnectModeActive={isConnectModeActive}
+              deleteSelected={deleteSelected}
+              undo={undo}
+              clearGraph={clearGraph}
+              selectedItem={selectedItem}
+              history={history}
+              fitGraph={fitGraph}
+            />
+          </div>
+          {/* Selected Item Info - Added mt-2 for a small gap */}
+          <div className="flex-shrink-0 mt-2">
+            <SelectedItemInfo
               selectedItem={selectedItem}
               selectedItemType={selectedItemType}
             />
           </div>
         </div>
-        
         {/* Right side - Network Container */}
-        <div className="w-3/4">
+        <div className="flex-grow flex flex-col">
           <div
             ref={networkContainer}
-            style={{ width: "100%", height: "75vh", border: "1px solid #ddd" }}
-            className="bg-white"
+            style={{ width: "100%", height: "100%" }}
+            className="bg-white shadow-md rounded w-full border border-gray-300"
           />
         </div>
       </div>

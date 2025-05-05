@@ -20,7 +20,7 @@ export const sendGraphToBackend = (nodes, edges, graphTitle) => {
   console.log("Sending graph data to backend:", graphData);
     
   return new Promise((resolve, reject) => {
-    fetch('https://graphworks-production.up.railway.app/api/graphs', {
+    fetch('https://graphworks.vercel.app/api/graphs', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
